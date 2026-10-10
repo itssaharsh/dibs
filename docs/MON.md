@@ -31,11 +31,11 @@ curl -X POST $U/api/admin/recycle -H "x-presenter-key: $K"
 
 # 2. Move MON to another wallet we control (listed in the MON_PEERS variable), keeping the reserve
 curl -X POST $U/api/admin/mon -H "x-presenter-key: $K" -H 'content-type: application/json' \
-  -d '{"to":"0x0A2A1B32217FaF497D3FF90d57Ee00348fABec4c","amount":"2"}'
+  -d '{"to":"0x9A2221e1951D76b0D9Aea2f31659C5f86F3D1A1A","amount":"2"}'
 
 # 3. Park the reserve itself elsewhere for a minute (the operator must be idle; Dibs can't fund phones until it's back)
 curl -X POST $U/api/admin/mon -H "x-presenter-key: $K" -H 'content-type: application/json' \
-  -d '{"to":"0x0A2A1B32217FaF497D3FF90d57Ee00348fABec4c","amount":"12","belowReserve":true}'
+  -d '{"to":"0x9A2221e1951D76b0D9Aea2f31659C5f86F3D1A1A","amount":"12","belowReserve":true}'
 
 # A small gas gift to any address (up to 0.5 MON each, 2 MON per server run), e.g. another app's owner phone
 curl -X POST $U/api/admin/mon -H "x-presenter-key: $K" -H 'content-type: application/json' \
@@ -45,7 +45,7 @@ curl -X POST $U/api/admin/mon -H "x-presenter-key: $K" -H 'content-type: applica
 From a laptop, for a wallet whose server is not running (the key is read from the env file and never printed):
 
 ```bash
-node scripts/mon.mjs status 0x0A2A1B32217FaF497D3FF90d57Ee00348fABec4c
+node scripts/mon.mjs status 0x9A2221e1951D76b0D9Aea2f31659C5f86F3D1A1A
 node scripts/mon.mjs send --env ../other-app/.env --key SERVER_PK --to 0xB99CE2Cc7E3fDaf405fa4f807642B39A3590d7B1 --amount 1 --below-reserve
 ```
 
