@@ -1,19 +1,26 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { applyStream, connectPoll, connectStream, type Snapshot, type StreamEvent } from "@/lib/stream-types";
 
 /**
  * Subscribe to the drop's stream. `drop` may be a number, "latest" (newest room drop) or "newest" (any drop,
  * bot rounds included). With "latest"/"newest" the hook re-subscribes when a new drop is created.
  */
-export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void) {
+export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void, canFollow?: () => boolean) {
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [connected, setConnected] = useState(false);
   const [gen, setGen] = useState(0);
+  const [newer, setNewer] = useState<number | null>(null); // a newer drop we did not jump to
   const cb = useRef(onEvent);
+  const can = useRef(canFollow);
   useEffect(() => {
     cb.current = onEvent;
-  }, [onEvent]);
+    can.current = canFollow;
+  }, [onEvent, canFollow]);
+  const follow = useCallback(() => {
+    setNewer(null);
+    setGen((g) => g + 1);
+  }, []);
 
   useEffect(() => {
     if (!drop) return;
@@ -22,7 +29,9 @@ export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void)
         onStatus: setConnected,
         onEvent: (ev: StreamEvent) => {
           if (follow && ev.type === "drop" && (drop === "newest" || !ev.synthetic)) {
-            setGen((g) => g + 1); // re-subscribe: the server resolves the new drop
+            // a screen with a live call of dibs stays put and offers the switch instead of jumping
+            if (can.current && !can.current()) setNewer(ev.id);
+            else setGen((g) => g + 1); // re-subscribe: the server resolves the new drop
             return;
           }
           const localAt = Date.now();
@@ -51,7 +60,7 @@ export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void)
     };
   }, [drop, gen]);
 
-  return { snap, connected };
+  return { snap, connected, newer, follow };
 }
 
 /** Chain time (s) from the latest head: block timestamp + time since this screen received it. */

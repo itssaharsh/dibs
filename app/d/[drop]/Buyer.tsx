@@ -40,7 +40,10 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
     },
     [setRecord],
   );
-  const { snap: liveSnap, connected } = useDropStream(live ? drop : "", onStream);
+  // stay on this drop while I have a live call of dibs here (waiting or first dibs); offer the switch instead
+  const busyRef = useRef(false);
+  const canFollow = useCallback(() => !busyRef.current, []);
+  const { snap: liveSnap, connected, newer, follow } = useDropStream(live ? drop : "", onStream, canFollow);
   const now = useNow(250);
   const [featured, setFeatured] = useState(0);
   const [pending, setPending] = useState<Record<number, PendingTx | null>>({});
@@ -65,6 +68,13 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   useEffect(() => {
     meRef.current = me;
   }, [me]);
+  useEffect(() => {
+    const live = (snap?.pieces ?? []).some((p) => {
+      const m = mineIn(p, me);
+      return !!m && !p.sold && (m.status === "waiting" || m.status === "holding");
+    });
+    busyRef.current = live || Object.values(pending).some((x) => x && !x.error);
+  }, [snap, me, pending]);
   const pieces = useMemo(() => snap?.pieces ?? [], [snap]);
   const piece: PieceState | undefined = pieces[featured] ?? pieces[0];
   const d = snap?.drop ?? null;
@@ -318,6 +328,11 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
       </div>
 
       {live && !connected && snap && <p className="px-4 pt-2 text-sm font-semibold text-ink">Reconnecting to Monad…</p>}
+      {newer && (
+        <button type="button" onClick={follow} className="mx-4 mt-2 rounded-lg bg-ink px-3 py-2 text-left text-sm font-semibold text-canvas">
+          A new drop started (#{newer}) — tap to switch. Your dibs here stays until you pay or your time runs out.
+        </button>
+      )}
 
       {!snap ? (
         <div className="m-4 h-[380px] animate-pulse rounded-[14px] bg-surface-1" aria-label="Loading the drop" />
