@@ -7,10 +7,11 @@ import { presenterKeyFromHash, useClientValue } from "@/lib/useClient";
 import { PresenterKey } from "@/components/PresenterKey";
 import { Wordmark } from "@/components/Wordmark";
 import { txUrl } from "@/lib/chain";
+import { nick } from "@/lib/nick";
 import { holderOf, type StreamEvent } from "@/lib/stream-types";
 import { fmtClock, fmtNum, useChainClock, useDropStream, useNow } from "@/lib/useDropStream";
 
-type Entry = { kind: "Paid" | "No-show" | "Refund"; piece: string; who: string; amount: string; tx: string | null; at: number };
+type Entry = { kind: "Paid" | "Ghosted" | "Returned"; piece: string; who: string; amount: string; tx: string | null; at: number };
 
 export function Seller({ drop }: { drop: string }) {
   const router = useRouter();
@@ -26,7 +27,7 @@ export function Seller({ drop }: { drop: string }) {
   const onEvent = useCallback((ev: StreamEvent) => {
     if (ev.type === "paid" || ev.type === "forfeited" || ev.type === "refunded") {
       setLedger((l) =>
-        [{ kind: ev.type === "paid" ? "Paid" : ev.type === "forfeited" ? "No-show" : "Refund", piece: `#${ev.piece + 1}`, who: ev.addr.slice(0, 8), amount: ev.amount, tx: ev.tx, at: Date.now() } as Entry, ...l].slice(0, 40),
+        [{ kind: ev.type === "paid" ? "Paid" : ev.type === "forfeited" ? "Ghosted" : "Returned", piece: `#${ev.piece + 1}`, who: nick(ev.addr), amount: ev.amount, tx: ev.tx, at: Date.now() } as Entry, ...l].slice(0, 40),
       );
     }
   }, []);
@@ -136,10 +137,10 @@ export function Seller({ drop }: { drop: string }) {
                     <b>{p.name}</b>
                     <br />
                     <span className="text-ink-muted">
-                      {b ? `Sold to #${b.position + 1} ${b.nick}` : h ? `#${h.position + 1} ${h.nick} holding · ${fmtClock(p.deadline - chainSec)}` : "no holder"}
+                      {b ? `Sold to #${b.position + 1} ${b.nick}` : h ? `#${h.position + 1} ${h.nick} has first dibs · ${fmtClock(p.deadline - chainSec)}` : "no one has first dibs"}
                     </span>
                   </span>
-                  <span className="tabular text-ink-muted">{p.queue.length} in line</span>
+                  <span className="tabular text-ink-muted">{p.queue.length} called dibs</span>
                 </li>
               );
             })}
@@ -150,17 +151,17 @@ export function Seller({ drop }: { drop: string }) {
           </div>
           <h3 className="m-0 text-sm font-semibold text-ink-muted">Ledger (this session)</h3>
           {ledger.length === 0 ? (
-            <p className="m-0 text-sm text-ink-muted">Payments, no-show deposits and refunds appear here as they land.</p>
+            <p className="m-0 text-sm text-ink-muted">Payments, ghosts&apos; deposits and deposits returned to buyers appear here as they land.</p>
           ) : (
             <ul className="m-0 flex list-none flex-col p-0 text-sm">
               {ledger.map((e) => (
                 <li key={`${e.at}-${e.tx}`} className="perf flex justify-between py-1.5">
                   <span>
-                    {e.kind} · piece {e.piece} · <span className="mono">{e.who}…</span>
+                    {e.kind === "Paid" ? "Paid by" : e.kind === "Ghosted" ? "Ghosted by" : "Deposit returned to"} {e.who} · piece {e.piece}
                   </span>
                   <span className="tabular">
-                    {e.kind === "Refund" ? "−" : "+"}
-                    {fmtNum(e.amount)} {e.tx && <a href={txUrl(e.tx)} target="_blank" rel="noreferrer">↗</a>}
+                    {e.kind === "Returned" ? <span className="text-ink-muted">{fmtNum(e.amount)} from the contract, not from you</span> : `+${fmtNum(e.amount)}`}{" "}
+                    {e.tx && <a href={txUrl(e.tx)} target="_blank" rel="noreferrer">↗</a>}
                   </span>
                 </li>
               ))}
