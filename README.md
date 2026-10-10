@@ -4,7 +4,7 @@
 
 ![The Dibs board after a no-show: #1 is torn off, NOW HOLDING 02, seller +50, every place in line with its block number](docs/board.png)
 
-**Live:** LIVE_URL · **Board (projector):** LIVE_URL/board/latest · **Phone:** LIVE_URL/d/latest
+**Live:** [https://stan-calgary-broke-oak.trycloudflare.com](https://stan-calgary-broke-oak.trycloudflare.com) · **Board (projector):** [/board/latest](https://stan-calgary-broke-oak.trycloudflare.com/board/latest) · **Phone:** [/d/latest](https://stan-calgary-broke-oak.trycloudflare.com/d/latest) — served from the team laptop during the event (Cloudflare tunnel).
 
 > You can't pay to jump this queue, the seller can't edit it, and a no-show pays for the wait.
 
