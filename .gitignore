@@ -39,3 +39,8 @@ out/
 .vercel
 *.pem
 .DS_Store
+
+# build-process files (next dev regenerates AGENTS.md)
+.prod-build/
+AGENTS.md
+CLAUDE.md

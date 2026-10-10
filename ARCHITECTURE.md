@@ -74,10 +74,10 @@ flowchart LR
 | MonadVision | links per tx; contract verification (Sourcify) | site slow | tx hash still shown | — |
 
 ## Key decisions
-- ADR-0001 One Next.js process on Railway, not Vercel functions: the indexer, keeper and nonce queue need one long-lived process; serverless would open one RPC socket per viewer.
-- ADR-0002 Burner wallets + Funder contract, not a relayer: buyers submit their own transactions, so the chain (not our server) orders claims.
-- ADR-0003 Money in a test ERC-20 with permit, not native MON: the 10 MON reserve rule reverts value transfers from small wallets; permit keeps a claim to one transaction.
-- ADR-0004 Tip cap inside claim(): Monad leaders order by priority fee, so without a cap a higher fee buys a place.
+- One Next.js process on Railway, not Vercel functions: the indexer, keeper and nonce queue need one long-lived process; serverless would open one RPC socket per viewer.
+- Burner wallets + Funder contract, not a relayer: buyers submit their own transactions, so the chain (not our server) orders claims.
+- Money in a test ERC-20 with permit, not native MON: the 10 MON reserve rule reverts value transfers from small wallets; permit keeps a claim to one transaction.
+- Tip cap inside claim(): Monad leaders order by priority fee, so without a cap a higher fee buys a place.
 
 ## Failure boundaries
 Phones degrade to "Reconnecting…" and keep their signed tx; the send relay is idempotent per tx hash; the keeper is idempotent (advance reverts "not yet" if early); a server restart rebuilds state from logs. The chain never stops; the demo stops only if every RPC is down (then the recorded take plays).
