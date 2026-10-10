@@ -321,7 +321,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
               Your deposit here: <b className="tabular">{fmtNum(myDeposit)} tINR</b>
               {myDeposit !== base && <span className="text-ink-muted"> (new buyers: {fmtNum(base)})</span>}
             </span>
-            <span className="text-ink-muted">· your record: {recordText(record)}</span>
+            <span className="w-full text-ink-muted">Your record: {recordText(record)}</span>
             <span className="w-full text-[13px] text-ink-muted">Pay on time and it halves at every Dibs store. Ghost and it doubles.</span>
           </div>
         )}
