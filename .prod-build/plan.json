@@ -300,7 +300,7 @@
         "WHEN the deployed URL is opened signed out THE SYSTEM SHALL serve /, /d/1, /board/1 and /api/health with 200"
       ],
       "verify": [
-        "python3 .prod-build/pb.py smoke https://REPLACE-WITH-RAILWAY-URL --routes / /d/1 /board/1 /api/health",
+        "python3 .prod-build/pb.py smoke https://https://web-production-b1eb0.up.railway.app --routes / /d/1 /board/1 /api/health",
         "observe: a phone on mobile data claims on the deployed URL and the deployed board shows it"
       ],
       "rollback": "Railway: redeploy the previous deployment",
@@ -639,7 +639,7 @@
       ],
       "verify": [
         "python3 .prod-build/pb.py window",
-        "python3 .prod-build/pb.py submit check --description \"Dibs: a claim link for Instagram thrift drops. Buyers tap at once, Monad records the order, and a no-show's deposit pays the seller as the item rolls to #2.\" --live https://REPLACE-WITH-RAILWAY-URL --online"
+        "python3 .prod-build/pb.py submit check --description \"Dibs: a claim link for Instagram thrift drops. Buyers tap at once, Monad records the order, and a no-show's deposit pays the seller as the item rolls to #2.\" --live https://https://web-production-b1eb0.up.railway.app --online"
       ],
       "rollback": "edit the README; resubmit before the deadline",
       "status": "todo",

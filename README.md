@@ -2,9 +2,9 @@
 
 **Dibs: a claim link for Instagram thrift drops. Buyers tap at once, Monad records the order, and a no-show's deposit pays the seller as the item rolls to #2.**
 
-![The Dibs board after a no-show: #1 is torn off, NOW HOLDING 02, seller +50, every place in line with its block number](docs/board.png)
+![The Dibs board live on Railway: #1 torn off as a no-show (50 to the seller), NOW HOLDING 02, every place in line with its block number](docs/board.png)
 
-**Live:** [https://stan-calgary-broke-oak.trycloudflare.com](https://stan-calgary-broke-oak.trycloudflare.com) · **Board (projector):** [/board/latest](https://stan-calgary-broke-oak.trycloudflare.com/board/latest) · **Phone:** [/d/latest](https://stan-calgary-broke-oak.trycloudflare.com/d/latest) — served from the team laptop during the event (Cloudflare tunnel).
+**Live:** [https://web-production-b1eb0.up.railway.app](https://web-production-b1eb0.up.railway.app) · **Board (projector):** [/board/latest](https://web-production-b1eb0.up.railway.app/board/latest) · **Phone:** [/d/latest](https://web-production-b1eb0.up.railway.app/d/latest) (Railway, one instance).
 
 > You can't pay to jump this queue, the seller can't edit it, and a no-show pays for the wait.
 

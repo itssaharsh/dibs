@@ -111,7 +111,9 @@ export function applyEvent(pieces: PieceState[], ev: ChainEvent): PieceState[] {
       case "forfeited": {
         setStatus(ev.addr, "no-show");
         const forfeitedAt = queue.findIndex((r) => r.addr.toLowerCase() === ev.addr.toLowerCase());
-        return { ...p, queue, head: Math.max(p.head, forfeitedAt + 1), deadline: 0 };
+        // if the next turn was already applied (head moved past this row), keep its deadline
+        const turnApplied = p.head > forfeitedAt;
+        return { ...p, queue, head: Math.max(p.head, forfeitedAt + 1), deadline: turnApplied ? p.deadline : 0 };
       }
       case "refunded":
         setStatus(ev.addr, "refunded");

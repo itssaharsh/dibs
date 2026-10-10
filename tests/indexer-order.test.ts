@@ -26,6 +26,7 @@ describe("indexer-order: the line follows chain order", () => {
     ps = applyEvent(ps, { type: "forfeited", drop: 1, piece: 0, addr: row(0, 0, 0).addr, amount: "50", tx: null });
     ps = applyEvent(ps, { type: "turn", drop: 1, piece: 0, index: 1, addr: row(1, 0, 0).addr, deadline: 1060 });
     expect(ps[0].queue[0].status).toBe("no-show");
+    expect(ps[0].deadline).toBe(1060);
     expect(holderOf(ps[0])?.position).toBe(1);
     ps = applyEvent(ps, { type: "paid", drop: 1, piece: 0, addr: row(1, 0, 0).addr, amount: "450", tx: null });
     expect(ps[0].sold).toBe(true);
@@ -33,5 +34,18 @@ describe("indexer-order: the line follows chain order", () => {
     expect(holderOf(ps[0])).toBeNull();
     ps = applyEvent(ps, { type: "refunded", drop: 1, piece: 0, addr: row(2, 0, 0).addr, amount: "50", tx: null });
     expect(ps[0].queue[2].status).toBe("refunded");
+  });
+});
+
+describe("indexer-order: event order inside one advance() tx", () => {
+  it("keeps the new holder's deadline if forfeited is applied after the next turn", () => {
+    let ps = [piece()];
+    for (const r of [row(0, 100, 0), row(1, 100, 1)]) ps = applyEvent(ps, { type: "claimed", drop: 1, piece: 0, row: r });
+    ps = applyEvent(ps, { type: "turn", drop: 1, piece: 0, index: 0, addr: row(0, 0, 0).addr, deadline: 1000 });
+    ps = applyEvent(ps, { type: "turn", drop: 1, piece: 0, index: 1, addr: row(1, 0, 0).addr, deadline: 1060 });
+    ps = applyEvent(ps, { type: "forfeited", drop: 1, piece: 0, addr: row(0, 0, 0).addr, amount: "50", tx: null });
+    expect(ps[0].head).toBe(1);
+    expect(ps[0].deadline).toBe(1060);
+    expect(holderOf(ps[0])?.position).toBe(1);
   });
 });

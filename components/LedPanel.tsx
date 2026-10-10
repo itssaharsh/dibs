@@ -34,7 +34,9 @@ export function LedPanel(props: {
           <>
             <span className="display text-[34px] leading-tight">{holder.nick}</span>
             <span className="text-[17px] text-led-label">
-              has {payWindow} s to pay {rest} tINR more, or the {fmtNum(deposit)} deposit goes to the seller
+              {secsLeft > 0
+                ? `has ${payWindow} s to pay ${rest} tINR more, or the ${fmtNum(deposit)} deposit goes to the seller`
+                : `didn't pay in time — rolling to the next in line…`}
             </span>
             <div aria-hidden className="h-2.5 rounded-full" style={{ background: "#2A2622" }}>
               <div className="h-2.5 rounded-full bg-led" style={{ width: `${pct}%` }} />
