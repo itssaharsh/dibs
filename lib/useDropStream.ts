@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { applyStream, connectStream, type Snapshot, type StreamEvent } from "@/lib/stream-types";
+import { applyStream, connectPoll, connectStream, type Snapshot, type StreamEvent } from "@/lib/stream-types";
 
 /**
  * Subscribe to the drop's stream. `drop` may be a number, "latest" (newest room drop) or "newest" (any drop,
@@ -18,11 +18,9 @@ export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void)
   useEffect(() => {
     if (!drop) return;
     const follow = drop === "latest" || drop === "newest";
-    const stop = connectStream(
-      `/api/stream?drop=${encodeURIComponent(drop)}`,
-      {
+    const handlers = {
         onStatus: setConnected,
-        onEvent: (ev) => {
+        onEvent: (ev: StreamEvent) => {
           if (follow && ev.type === "drop" && (drop === "newest" || !ev.synthetic)) {
             setGen((g) => g + 1); // re-subscribe: the server resolves the new drop
             return;
@@ -34,10 +32,23 @@ export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void)
           });
           cb.current?.(ev);
         },
-      },
+      };
+    // SSE first; if nothing arrives in 4 s (a proxy buffering the stream), fall back to polling.
+    let got = false;
+    let stop = connectStream(
+      `/api/stream?drop=${encodeURIComponent(drop)}`,
+      { onStatus: handlers.onStatus, onEvent: (ev) => { got = true; handlers.onEvent(ev); } },
       EventSource as unknown as Parameters<typeof connectStream>[2],
     );
-    return stop;
+    const fallback = setTimeout(() => {
+      if (got) return;
+      stop();
+      stop = connectPoll(`/api/poll?drop=${encodeURIComponent(drop)}`, handlers);
+    }, 4_000);
+    return () => {
+      clearTimeout(fallback);
+      stop();
+    };
   }, [drop, gen]);
 
   return { snap, connected };

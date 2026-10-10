@@ -164,6 +164,35 @@ export function applyStream(s: Snapshot | null, ev: StreamEvent): Snapshot | nul
 
 type ESLike = { onopen: (() => void) | null; onmessage: ((m: { data: string }) => void) | null; onerror: (() => void) | null; close(): void };
 
+/** Polling fallback (for proxies that buffer SSE): GET /api/poll?drop=&since= every `everyMs`. */
+export function connectPoll(
+  base: string,
+  h: { onEvent: (ev: StreamEvent) => void; onStatus: (connected: boolean) => void },
+  everyMs = 800,
+): () => void {
+  let since = 0;
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const tick = async () => {
+    try {
+      const r = await fetch(`${base}&since=${since}`, { cache: "no-store" });
+      const j = (await r.json()) as { seq: number; snapshot?: Snapshot; events: StreamEvent[] };
+      if (j.snapshot) h.onEvent({ type: "snapshot", data: j.snapshot });
+      for (const ev of j.events) h.onEvent(ev);
+      since = j.seq;
+      h.onStatus(true);
+    } catch {
+      h.onStatus(false);
+    }
+    if (!stopped) timer = setTimeout(tick, everyMs);
+  };
+  void tick();
+  return () => {
+    stopped = true;
+    clearTimeout(timer);
+  };
+}
+
 /** Subscribe to /api/stream; on any drop, close and re-open after `retryMs` (the server re-sends a snapshot). */
 export function connectStream(
   url: string,

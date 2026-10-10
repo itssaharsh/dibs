@@ -56,6 +56,8 @@ export class Indexer {
   tipRefused = new Map<number, number>();
   rpcErrors = 0;
   wsHeads = 0;
+  seq = 0;
+  recent: { seq: number; ev: StreamEvent }[] = []; // ring buffer for the polling fallback
   ready: Promise<void>;
   private scanning = false;
   private rescan = false;
@@ -408,6 +410,8 @@ export class Indexer {
   }
 
   emit(ev: StreamEvent) {
+    this.recent.push({ seq: ++this.seq, ev });
+    if (this.recent.length > 3_000) this.recent.splice(0, 1_000);
     for (const fn of this.listeners) {
       try {
         fn(ev);

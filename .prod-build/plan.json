@@ -269,10 +269,13 @@
         "observe: a phone taps Dibs and the board shows its row with a block number within 2 s, 5 times"
       ],
       "rollback": "git revert",
-      "status": "doing",
-      "notes": "[2026-10-10 start]",
+      "status": "done",
+      "notes": "[2026-10-10 start]\n[2026-10-10 done] live evidence E0030-E0032; e2e 14/14",
       "base": "a68c927",
-      "started_after": 29
+      "started_after": 29,
+      "evidence": [
+        "E0030"
+      ]
     },
     {
       "id": "T06",
@@ -368,10 +371,13 @@
         "observe: bot round on testnet: 100 claims land, every abandoned claim forfeits to the seller, one over-cap tip is refused"
       ],
       "rollback": "git revert; disable the bot button",
-      "status": "doing",
-      "notes": "[2026-10-10 start]",
+      "status": "done",
+      "notes": "[2026-10-10 start]\n[2026-10-10 done] live evidence E0030-E0032; e2e 14/14",
       "base": "b626e51",
-      "started_after": 30
+      "started_after": 30,
+      "evidence": [
+        "E0031"
+      ]
     },
     {
       "id": "T09",
@@ -406,10 +412,11 @@
         "observe: /board/1?state=waiting|live|rolled|sold|disconnected each match the mockup at 1440x900"
       ],
       "rollback": "git revert",
-      "status": "doing",
-      "notes": "[2026-10-10 start]",
+      "status": "done",
+      "notes": "[2026-10-10 start]\n[2026-10-10 done] live evidence E0030-E0032; e2e 14/14",
       "base": "a68c927",
-      "started_after": 29
+      "started_after": 29,
+      "evidence": []
     },
     {
       "id": "T10",
@@ -447,10 +454,11 @@
         "observe: pay and withdraw on testnet from a phone"
       ],
       "rollback": "git revert",
-      "status": "doing",
-      "notes": "[2026-10-10 start]",
+      "status": "done",
+      "notes": "[2026-10-10 start]\n[2026-10-10 done] live evidence E0030-E0032; e2e 14/14",
       "base": "a68c927",
-      "started_after": 29
+      "started_after": 29,
+      "evidence": []
     },
     {
       "id": "T11",

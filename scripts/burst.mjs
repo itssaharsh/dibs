@@ -15,7 +15,7 @@ const run = async (i) => {
   await btn.click();
   await p.getByText("Getting in line…").first().waitFor({ timeout: 2000 }).catch(() => {});
   const tGetting = Date.now() - t0;
-  await btn.filter({ hasText: /You're #/ }).waitFor({ timeout: 20000 });
+  await btn.filter({ hasText: /You're #|PAY/ }).waitFor({ timeout: 20000 });
   const ms = Date.now() - t0;
   const label = await btn.textContent();
   await p.screenshot({ path: `${process.env.SP}/tap-${i}.png` });
