@@ -14,6 +14,8 @@ export async function POST(req: Request) {
   if (!op) return NextResponse.json({ error: "operator not configured" }, { status: 503 });
   if (botState().running) return NextResponse.json({ running: true, drop: botState().drop }, { status: 409 });
   const ix = getIndexer();
-  runBotRound(ix, op).catch((e) => console.error("bot round", e));
+  const body = (await req.json().catch(() => ({}))) as { count?: number };
+  const count = Math.max(2, Math.min(Number(body.count) || 100, 100));
+  runBotRound(ix, op, count).catch((e) => console.error("bot round", e));
   return NextResponse.json({ started: true }, { status: 202 });
 }

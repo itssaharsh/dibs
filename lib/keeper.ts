@@ -22,8 +22,8 @@ export class Keeper {
     this.timer ??= setInterval(() => void this.tick(), 500);
   }
 
-  async tick(now = Date.now()) {
-    const nowSec = Math.floor(now / 1000);
+  async tick(now = Date.now(), chainSec?: number) {
+    const nowSec = Math.floor(chainSec ?? (this.ix.chainNow ? this.ix.chainNow() : now / 1000));
     for (const [id, e] of this.ix.drops) {
       for (const p of lapsed(e.pieces, nowSec)) {
         const key = `${id}:${p.index}:${p.head}`;

@@ -368,8 +368,10 @@
         "observe: bot round on testnet: 100 claims land, every abandoned claim forfeits to the seller, one over-cap tip is refused"
       ],
       "rollback": "git revert; disable the bot button",
-      "status": "todo",
-      "notes": ""
+      "status": "doing",
+      "notes": "[2026-10-10 start]",
+      "base": "b626e51",
+      "started_after": 30
     },
     {
       "id": "T09",

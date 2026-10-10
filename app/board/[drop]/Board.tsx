@@ -12,7 +12,7 @@ import { txUrl } from "@/lib/chain";
 import { chime } from "@/lib/chime";
 import { fixtureSnapshot } from "@/lib/fixtures";
 import { holderOf, type ClaimRow, type Snapshot, type StreamEvent } from "@/lib/stream-types";
-import { fmtClock, fmtNum, useDropStream, useNow } from "@/lib/useDropStream";
+import { fmtClock, fmtNum, useChainClock, useDropStream, useNow } from "@/lib/useDropStream";
 
 const VISIBLE = 12;
 
@@ -85,6 +85,7 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
   }, [current]);
   const snap = paused ?? current;
   const disconnected = fixture === "disconnected" || (!fixture && !connected && !!snap);
+  const chainSec = useChainClock(snap, now);
 
   const admin = async (path: string, label: string) => {
     if (!key) return setMsg("Presenter only: open the board with #key=… in the URL.");
@@ -120,8 +121,8 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
   const piece = snap.pieces[featured] ?? snap.pieces[0];
   const holder = piece ? holderOf(piece) : null;
   const buyer = piece?.sold ? piece.queue.find((r) => r.status === "won") ?? null : null;
-  const opensIn = d.startsAt - now / 1000;
-  const secsLeft = piece?.deadline ? piece.deadline - now / 1000 : 0;
+  const opensIn = d.startsAt - chainSec;
+  const secsLeft = piece?.deadline ? piece.deadline - chainSec : 0;
   const mode = disconnected ? "disconnected" : opensIn > 0 ? "waiting" : piece?.sold ? "sold" : holder ? "holding" : "empty";
   // show the last torn stub and the line from the holder on
   const start = Math.max(0, (piece?.head ?? 0) - 1);
@@ -247,7 +248,7 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
                       <b>{p.name}</b> · {p.size}
                     </span>
                     <span className="tabular text-ink-muted">
-                      {b ? `SOLD to #${b.position + 1}` : h ? `Holding: ${String(h.position + 1).padStart(2, "0")} · ${fmtClock(p.deadline - now / 1000)}` : `${p.queue.length} in line`}
+                      {b ? `SOLD to #${b.position + 1}` : h ? `Holding: ${String(h.position + 1).padStart(2, "0")} · ${fmtClock(p.deadline - chainSec)}` : `${p.queue.length} in line`}
                     </span>
                   </button>
                 );
@@ -266,6 +267,7 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
             price={d.price}
             deposit={d.deposit}
             opensAt={d.startsAt}
+            opensIn={opensIn}
           />
           <div className="flex items-baseline justify-between">
             <span className="label-caps text-[15px]">In line</span>

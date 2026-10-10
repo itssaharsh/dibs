@@ -20,7 +20,7 @@ class FakeES {
 
 const snap = (block: number): Snapshot => ({
   drop: null, latestDrop: 1, pieces: [], seller: { address: null, balance: "0" }, stats: emptyStats(),
-  head: { block, receivedAt: 0, baseFee: "0" },
+  head: { block, receivedAt: 0, baseFee: "0", ts: 0 },
 });
 
 describe("AC-9 stream-reconnect", () => {

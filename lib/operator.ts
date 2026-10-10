@@ -19,7 +19,7 @@ export const tokenAbi = TestRupeeAbi as typeof TestRupeeAbi;
 
 export const RESERVE = parseEther("10");
 export const FUND_FLOOR = parseEther("12"); // refuse funding below this (Monad keeps 10 MON reserve per EOA)
-export const PHONE_GAS = parseEther("0.25");
+export const PHONE_GAS = parseEther("0.15"); // one claim + pay + withdraw, or two claims + pay
 export const PHONE_TINR = parseEther("1000");
 export const MAX_FUNDED = 400;
 

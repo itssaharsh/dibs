@@ -11,8 +11,9 @@ export function LedPanel(props: {
   price?: string;
   deposit?: string;
   opensAt?: number;
+  opensIn?: number;
 }) {
-  const { mode, holder, buyer, secsLeft = 0, payWindow = 60, price = "450", deposit = "50", opensAt } = props;
+  const { mode, holder, buyer, secsLeft = 0, payWindow = 60, price = "450", deposit = "50", opensAt, opensIn = 0 } = props;
   const pct = mode === "holding" ? Math.max(0, Math.min(100, (secsLeft / payWindow) * 100)) : 0;
   const digits = mode === "holding" && holder ? String(holder.position + 1).padStart(2, "0") : mode === "sold" && buyer ? String(buyer.position + 1).padStart(2, "0") : "--";
   const rest = fmtNum(Number(price) - Number(deposit));
@@ -63,7 +64,7 @@ export function LedPanel(props: {
       <div className="flex flex-col items-end gap-1">
         <span className="label-caps text-[15px] text-led-label">{mode === "waiting" ? "OPENS IN" : "PAYS IN"}</span>
         <span className="led leading-none" style={{ fontSize: 72 }}>
-          {mode === "holding" ? fmtClock(secsLeft) : mode === "waiting" && opensAt ? fmtClock(opensAt - Date.now() / 1000) : "-:--"}
+          {mode === "holding" ? fmtClock(secsLeft) : mode === "waiting" ? fmtClock(opensIn) : "-:--"}
         </span>
       </div>
     </div>

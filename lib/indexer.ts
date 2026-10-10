@@ -48,7 +48,7 @@ export class Indexer {
   drops = new Map<number, DropEntry>();
   latestDrop = 0;
   lastScanned = 0n;
-  head = { block: 0, receivedAt: 0, baseFee: "100000000000" };
+  head = { block: 0, receivedAt: 0, baseFee: "100000000000", ts: 0 };
   headTimes = new Map<number, number>();
   seen = new Set<string>();
   listeners = new Set<(ev: StreamEvent) => void>();
@@ -82,7 +82,8 @@ export class Indexer {
       }
     }
     this.lastScanned = at;
-    this.head = { ...this.head, block: Number(at), receivedAt: Date.now() };
+    const bootBlock = await c.getBlock({ blockNumber: at });
+    this.head = { ...this.head, block: Number(at), receivedAt: Date.now(), ts: Number(bootBlock.timestamp) };
     this.startHeads();
     setInterval(() => void this.tick(), 1_000);
   }
@@ -168,7 +169,7 @@ export class Indexer {
         const kind = subs.get(p.subscription);
         if (kind === "heads" && p.result.number) {
           this.wsHeads++;
-          this.onHead(Number(BigInt(p.result.number)), BigInt(p.result.baseFeePerGas ?? "100000000000"));
+          this.onHead(Number(BigInt(p.result.number)), BigInt(p.result.baseFeePerGas ?? "100000000000"), Number(BigInt(p.result.timestamp ?? "0")));
         } else if (kind === "logs") {
           this.onRawLog(p.result);
         }
@@ -203,7 +204,7 @@ export class Indexer {
     if (Date.now() - this.lastHeadAt >= 1_500) {
       try {
         const b = await publicClient().getBlock();
-        this.onHead(Number(b.number), b.baseFeePerGas ?? 100_000_000_000n);
+        this.onHead(Number(b.number), b.baseFeePerGas ?? 100_000_000_000n, Number(b.timestamp));
       } catch {
         this.rpcErrors++;
       }
@@ -211,7 +212,13 @@ export class Indexer {
     if (this.ticks % 3 === 0) void this.scan();
   }
 
-  private onHead(block: number, baseFee: bigint) {
+  /** Chain time in seconds: the last head's block timestamp plus the time since it arrived. */
+  chainNow(): number {
+    if (!this.head.ts) return Date.now() / 1000;
+    return this.head.ts + (Date.now() - this.head.receivedAt) / 1000;
+  }
+
+  private onHead(block: number, baseFee: bigint, ts: number) {
     this.lastHeadAt = Date.now();
     if (block <= this.head.block) return;
     const receivedAt = Date.now();
@@ -220,8 +227,8 @@ export class Indexer {
       const cut = block - 4_000;
       for (const k of this.headTimes.keys()) if (k < cut) this.headTimes.delete(k);
     }
-    this.head = { block, receivedAt, baseFee: baseFee.toString() };
-    this.emit({ type: "head", block, receivedAt, baseFee: baseFee.toString() });
+    this.head = { block, receivedAt, baseFee: baseFee.toString(), ts };
+    this.emit({ type: "head", block, receivedAt, baseFee: baseFee.toString(), ts });
   }
 
   private async scan() {
@@ -377,8 +384,9 @@ export class Indexer {
   resolveDrop(param: string | null): number {
     const n = Number(param);
     if (param && param !== "latest" && Number.isFinite(n) && n > 0) return n;
-    // "latest": the newest drop that isn't a bot round, else the newest
+    // "latest": the newest drop that isn't a bot round, else the newest; "newest": any drop
     const ids = [...this.drops.keys()].sort((a, b) => b - a);
+    if (param === "newest") return ids[0] ?? this.latestDrop;
     return ids.find((i) => !this.drops.get(i)!.drop.synthetic) ?? ids[0] ?? this.latestDrop;
   }
 

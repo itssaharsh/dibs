@@ -55,7 +55,7 @@ export type Snapshot = {
   pieces: PieceState[];
   seller: { address: Addr | null; balance: string };
   stats: Stats;
-  head: { block: number; receivedAt: number; baseFee: string };
+  head: { block: number; receivedAt: number; baseFee: string; ts: number }; // ts = block timestamp (s)
 };
 
 export type ChainEvent =
@@ -67,7 +67,7 @@ export type ChainEvent =
 
 export type StreamEvent =
   | { type: "snapshot"; data: Snapshot }
-  | { type: "head"; block: number; receivedAt: number; baseFee: string }
+  | { type: "head"; block: number; receivedAt: number; baseFee: string; ts: number }
   | { type: "drop"; id: number; synthetic: boolean } // a new drop was created
   | { type: "stats"; drop: number; stats: Stats }
   | { type: "seller"; drop: number; balance: string }
@@ -148,7 +148,7 @@ export function applyStream(s: Snapshot | null, ev: StreamEvent): Snapshot | nul
   if (!s) return s;
   switch (ev.type) {
     case "head":
-      return { ...s, head: { block: ev.block, receivedAt: ev.receivedAt, baseFee: ev.baseFee } };
+      return { ...s, head: { block: ev.block, receivedAt: ev.receivedAt, baseFee: ev.baseFee, ts: ev.ts } };
     case "drop":
       return { ...s, latestDrop: Math.max(s.latestDrop, ev.id) };
     case "stats":

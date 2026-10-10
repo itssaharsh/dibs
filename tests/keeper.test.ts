@@ -21,11 +21,11 @@ describe("keeper (AC-3 live path)", () => {
     const call = vi.fn(async () => "0xhash");
     const ix = { drops: new Map([[7, { pieces: [p({ index: 1 })] }]]), head: { baseFee: "100000000000" } };
     const k = new Keeper(ix as never, { call, baseFee: 0n } as never);
-    await k.tick(101_000);
-    await k.tick(101_500);
+    await k.tick(101_000, 101);
+    await k.tick(101_500, 101.5);
     expect(call).toHaveBeenCalledTimes(1);
     expect(call.mock.calls[0]).toEqual(["advance", [7n, 1], 200_000n]);
-    await k.tick(103_100);
+    await k.tick(103_100, 103.1);
     expect(call).toHaveBeenCalledTimes(2);
   });
 });

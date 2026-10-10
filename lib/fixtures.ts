@@ -32,6 +32,6 @@ export function fixtureSnapshot(opts: { claims?: number; head?: number; sold?: b
     pieces,
     seller: { address: addr(999), balance: String(1250 + 50 * (opts.noShows ?? head)) },
     stats: { ...emptyStats(), claims: n + 27, firstBlock: base, lastBlock: base + 2, spanMs: 640, medianSendToSeenMs: 910, forfeits: head },
-    head: { block: base + 12, receivedAt: Date.now(), baseFee: "100000000000" },
+    head: { block: base + 12, receivedAt: Date.now(), baseFee: "100000000000", ts: now },
   };
 }

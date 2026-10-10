@@ -26,29 +26,29 @@ export function botState() {
   return (g.__dibsBots ??= { running: false, drop: 0 });
 }
 
-export async function runBotRound(ix: Indexer, op: Operator): Promise<{ drop: number }> {
+export async function runBotRound(ix: Indexer, op: Operator, count = BOT_COUNT): Promise<{ drop: number }> {
   const st = botState();
   if (st.running) return { drop: st.drop };
   st.running = true;
   const emit = (phase: string, done: number, note?: string) =>
-    ix.emit({ type: "bots", drop: st.drop, phase, done, total: BOT_COUNT, note });
+    ix.emit({ type: "bots", drop: st.drop, phase, done, total: count, note });
   try {
     const d = await createDrop({ startsIn: 12, payWindow: BOT_WINDOW, pieces: 2 });
     st.drop = d.id;
     emit("funding", 0);
-    const bots = Array.from({ length: BOT_COUNT }, () => privateKeyToAccount(generatePrivateKey()));
+    const bots = Array.from({ length: count }, () => privateKeyToAccount(generatePrivateKey()));
     const tipper = privateKeyToAccount(generatePrivateKey());
     let funded = 0;
     await Promise.all([
       ...bots.map((b) => op.fund(b.address, BOT_GAS, BOT_TINR).then(() => emit("funding", ++funded))),
       op.fund(tipper.address, TIPPER_GAS, BOT_TINR),
     ]);
-    const wait = d.startsAt * 1000 - Date.now() + 400;
-    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    // wait for CHAIN time (block timestamps can trail the server clock by a second or more)
+    while (ix.chainNow() < d.startsAt + 0.5) await new Promise((r) => setTimeout(r, 100));
     const baseFee = BigInt(ix.head.baseFee);
     const maxFee = (baseFee * 5n) / 4n + 1_000_000_000n;
     const signed = await Promise.all(
-      planBots().map(({ bot, piece }) =>
+      planBots(count).map(({ bot, piece }) =>
         buildClaim(bots[bot], { dropId: d.id, piece, deposit: "50", nonce: 0, permitNonce: 0 }, { maxFee }),
       ),
     );

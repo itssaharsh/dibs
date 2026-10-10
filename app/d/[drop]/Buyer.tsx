@@ -11,7 +11,7 @@ import { FIXTURE_ME, fixtureSnapshot } from "@/lib/fixtures";
 import { holderOf, mineIn, type PieceState, type Snapshot } from "@/lib/stream-types";
 import { buildClaim, buildPay, buildWithdraw } from "@/lib/tx";
 import { sendRaw, txStatus, useBurner } from "@/lib/useBurner";
-import { fmtClock, fmtNum, useDropStream, useNow } from "@/lib/useDropStream";
+import { fmtClock, fmtNum, useChainClock, useDropStream, useNow } from "@/lib/useDropStream";
 
 type PendingTx = NonNullable<Pending> & { raw?: Hex; sentAt?: number; note?: string };
 
@@ -29,7 +29,6 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   const { snap: liveSnap, connected } = useDropStream(live ? drop : "");
   const burner = useBurner();
   const now = useNow(250);
-  const nowSec = Math.floor(now / 1000);
   const [featured, setFeatured] = useState(0);
   const [pending, setPending] = useState<Record<number, PendingTx | null>>({});
   const [reason, setReason] = useState<string | null>(null);
@@ -47,6 +46,8 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixture, liveSnap]);
 
+  const chainSec = useChainClock(snap, now);
+  const nowSec = Math.floor(chainSec);
   const me = fixture ? FIXTURE_ME : burner.account?.address;
   const pieces = snap?.pieces ?? [];
   const piece: PieceState | undefined = pieces[featured] ?? pieces[0];
@@ -63,11 +64,11 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   const mine = piece ? mineIn(piece, me) : null;
   const holder = piece ? holderOf(piece) : null;
   const ahead = mine && piece ? Math.max(0, mine.position - piece.head) : 0;
-  const secsLeft = piece && piece.deadline ? piece.deadline - now / 1000 : 0;
+  const secsLeft = piece && piece.deadline ? piece.deadline - chainSec : 0;
   const deposit = d ? fmtNum(d.deposit) : "50";
   const price = d ? fmtNum(d.price) : "450";
   const rest = d ? fmtNum(Number(d.price) - Number(d.deposit)) : "400";
-  const opensIn = d ? d.startsAt - now / 1000 : 0;
+  const opensIn = d ? d.startsAt - chainSec : 0;
 
   // clear a pending tx once the stream shows its effect
   useEffect(() => {
@@ -178,7 +179,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
 
   const label = (st: BuyerState, p: PieceState | undefined): string => {
     const m = p ? mineIn(p, me) : null;
-    const left = p && p.deadline ? p.deadline - now / 1000 : 0;
+    const left = p && p.deadline ? p.deadline - chainSec : 0;
     switch (st) {
       case "wallet-setup":
         return burner.status === "error" && !fixture ? "Try again" : "Setting up…";
