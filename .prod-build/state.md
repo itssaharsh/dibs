@@ -1,28 +1,25 @@
 # Build state - dibs
-Updated: 2026-10-10 06:50 IST | mode: hackathon | channel: relay | phase: 0-intake (BEFORE the clock)
-(Keep this under 60 lines. Overwrite it at every phase boundary and before stopping.)
+Updated: 2026-10-10 14:40 IST | mode: hackathon | phase: BUILT, deployed from the laptop; Railway pending login
 
 ## Now
-- Phase / current task: planning done; nothing built; nothing committed. Window opens 09:00 IST (provisional).
-- Last good commit: none (no repo yet)            Last good deploy: none
+- Built: contracts (deployed + verified), server (WS indexer, SSE + polling fallback, wallet funding, relay, keeper, admin, bot round), buyer/board/seller/landing/ticket pages, e2e.
+- Live: https://stan-calgary-broke-oak.trycloudflare.com (prod `npm start` on :3002 + cloudflared quick tunnel). Quick tunnels buffer SSE, so phones fall back to polling (~2.5 s tap→place vs ~1.4 s direct).
+- Fork: github.com/itssaharsh/dibs (main pushed, description = one-liner).
+- Backup take: ~/dibs-takes/backup-1.mp4 (63.8 s).
 
-## What worked (with evidence IDs)
-- Plan check: 0 errors, 1 warning (provisional clock), 16 tasks, briefs T01–T16.
+## Addresses (Monad testnet 10143)
+DropHouse 0x119d4dd7b665717d328dc059daa98b85e7c8302f · tINR 0x9266e65380e7f1bd5fc64a9a4f4fb9f1a6acf27c · Funder 0x3f3f1e5fb18c95736f089776352d15e9bc4149f4 · deploy block 69775604 · operator 0xB99CE2Cc7E3fDaf405fa4f807642B39A3590d7B1
 
-## What failed (memory IDs) - do not retry without a new root cause
-- none yet. Anticipated: F-0001 (Monad 10 MON reserve: small wallets can't spend native value).
+## What worked (evidence)
+E0018-21 forge 8/8 · E0022-23 deploy+verify · E0024-29 server tests · E0030 5 live phones · E0031 100-bot round · E0032 pay/withdraw · E0033 e2e 14/14 · E0034 backup take
 
-## Not tried yet / open questions
-- Real build-block instants (re-set the clock at kickoff with --confirmed).
-- Monad Foundation "Judging Process Criteria" page text (JS-only; read it in a browser).
-- Faucet amount; ≥ 30 test MON in the operator wallet.
-- Indian thrift drops still on comment/DM claims? (15-minute check, A-5).
-
-## Changes that need care (migrations applied, deploys, destructive ops)
-- Contracts deploy to Monad testnet (T03): addresses are config; redeploy is safe.
-
-## Key paths
-- Contract interface + tx rules: ARCHITECTURE.md · UI: ../hackathon-idea/monad-blitz-pune-v3/ui/UI-SPEC.md · paste lines: PROMPTS.md
+## What failed (do not repeat)
+- viem watchBlocks over WS on Monad → onBlock(undefined): use raw eth_subscribe.
+- eth_getLogs capped at 100 blocks: rebuild from contract views at boot.
+- Block timestamps trail wall clock ≥1 s: use chain time for start/deadlines/keeper/bots.
+- Cloudflare quick tunnel buffers SSE: polling fallback (/api/poll) kicks in after 4 s.
 
 ## Exact next step
-At kickoff: `python3 .prod-build/pb.py --root . clock set --start <announced> --end <announced> --freeze <end-1h> --confirmed`, fork + clone, copy this folder in, first commit, then `python3 .prod-build/pb.py task T01 start` and paste T01.
+1. Railway: approve the CLI login, then `railway init` + variables from .env + `railway up` (or dashboard: deploy itssaharsh/dibs, set .env.example vars, one replica). Then put the Railway URL in README and push.
+2. Only ONE server may run with OPERATOR_PK (nonce queue): stop the laptop server when Railway is live.
+3. At the venue: `SP=/tmp node scripts/burst.mjs <url> 10`; real photos into public/pieces/; final take (T15); Blitz Portal submission (T16).
