@@ -31,3 +31,11 @@ video-script.md
 storage-state*.json
 storage_state*.json
 *.storage-state.json
+
+# from the Next.js scaffold
+*.tsbuildinfo
+next-env.d.ts
+out/
+.vercel
+*.pem
+.DS_Store
