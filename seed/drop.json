@@ -1,0 +1,9 @@
+{
+  "store": "pocket.thrift",
+  "storeLabel": "demo store",
+  "pieces": [
+    { "index": 0, "name": "Denim jacket", "size": "M", "photo": "/pieces/denim-jacket.svg", "featured": true },
+    { "index": 1, "name": "Block-print kurta", "size": "S", "photo": "/pieces/kurta.svg" },
+    { "index": 2, "name": "Corduroy cap", "size": "One size", "photo": "/pieces/cap.svg" }
+  ]
+}

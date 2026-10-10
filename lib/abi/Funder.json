@@ -1,0 +1,87 @@
+[
+ {
+  "type": "constructor",
+  "inputs": [
+   {
+    "name": "operator_",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "nonpayable"
+ },
+ {
+  "type": "function",
+  "name": "fund",
+  "inputs": [
+   {
+    "name": "to",
+    "type": "address[]",
+    "internalType": "address[]"
+   },
+   {
+    "name": "gasEach",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "tinrEach",
+    "type": "uint256",
+    "internalType": "uint256"
+   }
+  ],
+  "outputs": [],
+  "stateMutability": "payable"
+ },
+ {
+  "type": "function",
+  "name": "operator",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "token",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "contract TestRupee"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "event",
+  "name": "Funded",
+  "inputs": [
+   {
+    "name": "to",
+    "type": "address",
+    "indexed": true,
+    "internalType": "address"
+   },
+   {
+    "name": "gas",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   },
+   {
+    "name": "tinr",
+    "type": "uint256",
+    "indexed": false,
+    "internalType": "uint256"
+   }
+  ],
+  "anonymous": false
+ }
+]

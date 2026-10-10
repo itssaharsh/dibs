@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="Block-print kurta (illustration)">
+  <defs><pattern id="bp" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="18" cy="18" r="7" fill="none" stroke="#B5442E" stroke-width="3"/><circle cx="18" cy="18" r="2" fill="#B5442E"/></pattern></defs>
+  <rect width="400" height="500" fill="#F4F1EA"/>
+  <line x1="40" y1="70" x2="360" y2="70" stroke="#8A8378" stroke-width="4"/>
+  <path d="M200 70 L200 96" stroke="#1A1714" stroke-width="4"/>
+  <path d="M140 110 L200 100 L260 110 L330 160 L310 260 L280 250 L290 450 L110 450 L120 250 L90 260 L70 160 Z" fill="#F2E3C6" stroke="#1A1714" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M140 110 L200 100 L260 110 L330 160 L310 260 L280 250 L290 450 L110 450 L120 250 L90 260 L70 160 Z" fill="url(#bp)" opacity=".85"/>
+  <path d="M184 102 L200 170 L216 102" fill="#F2E3C6" stroke="#1A1714" stroke-width="4"/>
+  <text x="200" y="486" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#6B655C">illustration</text>
+</svg>

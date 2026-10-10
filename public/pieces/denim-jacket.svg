@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="Denim jacket (illustration)">
+  <rect width="400" height="500" fill="#F4F1EA"/>
+  <line x1="40" y1="70" x2="360" y2="70" stroke="#8A8378" stroke-width="4"/>
+  <path d="M200 70 L200 96" stroke="#1A1714" stroke-width="4"/>
+  <path d="M200 96 q-18 0 -18 -14" fill="none" stroke="#1A1714" stroke-width="4"/>
+  <path d="M130 120 L200 100 L270 120 L340 170 L322 330 L290 322 L292 430 L108 430 L110 322 L78 330 L60 170 Z" fill="#4F6E93" stroke="#1A1714" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M170 104 L200 160 L230 104" fill="#3E5A7C" stroke="#1A1714" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="200" y1="160" x2="200" y2="430" stroke="#1A1714" stroke-width="4"/>
+  <rect x="128" y="200" width="52" height="44" rx="4" fill="#5B7CA3" stroke="#1A1714" stroke-width="3"/>
+  <rect x="220" y="200" width="52" height="44" rx="4" fill="#5B7CA3" stroke="#1A1714" stroke-width="3"/>
+  <line x1="108" y1="392" x2="292" y2="392" stroke="#1A1714" stroke-width="3" stroke-dasharray="6 6"/>
+  <g fill="#C9A86A" stroke="#1A1714" stroke-width="2"><circle cx="212" cy="190" r="5"/><circle cx="212" cy="260" r="5"/><circle cx="212" cy="330" r="5"/></g>
+  <text x="200" y="478" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#6B655C">illustration</text>
+</svg>
