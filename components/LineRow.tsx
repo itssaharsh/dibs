@@ -1,9 +1,12 @@
 import { addressUrl, txUrl } from "@/lib/chain";
 import type { ClaimRow } from "@/lib/stream-types";
+import { recordLabel } from "@/lib/record";
 import { fmtNum } from "@/lib/useDropStream";
 
-/** C-02: one ticket stub in a piece's line. */
-export function LineRow({ row, deposit, torn }: { row: ClaimRow; deposit: string; torn?: boolean }) {
+/** C-02: one call of dibs, with the deposit its buyer put down and what that says about their record. */
+export function LineRow({ row, base, torn }: { row: ClaimRow; base: string; torn?: boolean }) {
+  const label = recordLabel(Number(row.deposit), Number(base));
+  const flagged = label.startsWith("ghosted");
   const holding = row.status === "holding";
   const noShow = row.status === "no-show";
   return (
@@ -16,7 +19,13 @@ export function LineRow({ row, deposit, torn }: { row: ClaimRow; deposit: string
       <span className={`min-w-0 flex-1 truncate ${holding ? "font-bold" : "font-semibold"}`} style={{ textDecoration: noShow ? "line-through" : undefined }}>
         {row.nick}
       </span>
-      {noShow && <span className="text-base text-ink-muted">No-show — {fmtNum(deposit)} to seller</span>}
+      {noShow ? (
+        <span className="text-base text-ink-muted">Ghosted — {fmtNum(row.deposit)} to seller</span>
+      ) : (
+        <span className={`whitespace-nowrap text-base ${flagged ? "font-semibold text-ink" : "text-ink-muted"}`}>
+          deposit {fmtNum(row.deposit)} · {label}
+        </span>
+      )}
       {row.status === "won" && <span className="text-base font-bold text-success">Bought ✓</span>}
       {row.status === "refunded" && <span className="text-base text-ink-muted">Deposit back</span>}
       <span className="mono hidden text-base text-ink-muted sm:inline">

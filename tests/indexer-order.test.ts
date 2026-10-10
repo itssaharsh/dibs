@@ -3,7 +3,7 @@ import { applyEvent, holderOf, type ClaimRow, type PieceState } from "@/lib/stre
 
 const piece = (): PieceState => ({ index: 0, name: "Denim jacket", size: "M", photo: "", queue: [], head: 0, deadline: 0, sold: false, buyer: null });
 const row = (n: number, block: number, txIndex: number): ClaimRow => ({
-  addr: `0x${String(n).padStart(40, "0")}`, nick: `n${n}`, position: n, block, txIndex, tx: `0x${n}`, status: "waiting",
+  addr: `0x${String(n).padStart(40, "0")}`, nick: `n${n}`, position: n, block, txIndex, tx: `0x${n}`, status: "waiting", deposit: "50",
 });
 
 describe("indexer-order: the line follows chain order", () => {

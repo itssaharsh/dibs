@@ -1,6 +1,6 @@
 // Builds and signs every buyer transaction locally (burner key never leaves the browser).
 // Explicit gas (measured on Monad; gas is charged on the limit) and a tip at or under DropHouse.MAX_TIP.
-import { encodeFunctionData, keccak256, parseEther, parseSignature, type Hex, type LocalAccount } from "viem";
+import { encodeFunctionData, keccak256, maxUint256, parseSignature, type Hex, type LocalAccount } from "viem";
 import DropHouseAbi from "@/lib/abi/DropHouse.json";
 import { addresses, GAS, maxFeeFor, monadTestnet, TIP } from "@/lib/chain";
 
@@ -48,7 +48,8 @@ export async function claimTxParams(
   fees: Fees = {},
 ): Promise<TxParams> {
   const deadline = permitDeadline();
-  const { v, r, s } = await signPermit(account, parseEther(a.deposit), a.permitNonce, deadline);
+  // one allowance for DropHouse (test money): the deposit is priced on chain by the buyer's record
+  const { v, r, s } = await signPermit(account, maxUint256, a.permitNonce, deadline);
   const data = encodeFunctionData({ abi, functionName: "claimWithPermit", args: [BigInt(a.dropId), a.piece, deadline, v, r, s] });
   return { to: addresses.dropHouse, data, gas: GAS.claimWithPermit, nonce: a.nonce, ...feeParams(fees) };
 }
@@ -63,8 +64,7 @@ export async function buildPay(
   fees: Fees = {},
 ) {
   const deadline = permitDeadline();
-  const value = parseEther(a.price) - parseEther(a.deposit);
-  const { v, r, s } = await signPermit(account, value, a.permitNonce, deadline);
+  const { v, r, s } = await signPermit(account, maxUint256, a.permitNonce, deadline);
   const data = encodeFunctionData({ abi, functionName: "payWithPermit", args: [BigInt(a.dropId), a.piece, deadline, v, r, s] });
   return sign(account, { to: addresses.dropHouse, data, gas: GAS.payWithPermit, nonce: a.nonce, ...feeParams(fees) });
 }

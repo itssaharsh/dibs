@@ -224,7 +224,7 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
                 <div className="tabular mt-1.5 flex gap-4 whitespace-nowrap text-lg">
                   <span>Size {piece.size}</span>
                   <span className="font-bold">{fmtNum(d.price)} tINR</span>
-                  <span className="text-tag-ink-muted">deposit {fmtNum(d.deposit)}</span>
+                  <span className="text-tag-ink-muted">deposit {fmtNum(d.deposit)}, priced by record</span>
                 </div>
               </HangTag>
             </article>
@@ -245,7 +245,7 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
                       <b>{p.name}</b> · {p.size}
                     </span>
                     <span className="tabular text-ink-muted">
-                      {b ? `SOLD to #${b.position + 1}` : h ? `Holding: ${String(h.position + 1).padStart(2, "0")} · ${fmtClock(p.deadline - chainSec)}` : `${p.queue.length} in line`}
+                      {b ? `SOLD to #${b.position + 1}` : h ? `Holding: ${String(h.position + 1).padStart(2, "0")} · ${fmtClock(p.deadline - chainSec)}` : `${p.queue.length} called dibs`}
                     </span>
                   </button>
                 );
@@ -267,15 +267,15 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
             opensIn={opensIn}
           />
           <div className="flex items-baseline justify-between">
-            <span className="label-caps text-[15px]">In line</span>
+            <span className="label-caps text-[15px]">Called dibs</span>
             <span className="tabular text-[17px] text-ink-muted">
-              {fmtNum(piece?.queue.length ?? 0)} in line · ordered by block, then position in block
+              {fmtNum(piece?.queue.length ?? 0)} called dibs · chain order: block, then position in block
             </span>
           </div>
           <ol className="m-0 flex list-none flex-col p-0">
-            {rows.length === 0 && <li className="perf py-3 text-lg text-ink-muted">{opensIn > 0 ? `The line opens in ${fmtClock(opensIn)}` : "Be first in line."}</li>}
+            {rows.length === 0 && <li className="perf py-3 text-lg text-ink-muted">{opensIn > 0 ? `Dibs opens in ${fmtClock(opensIn)}` : "Be first to call dibs."}</li>}
             {rows.map((r) => (
-              <LineRow key={`${r.position}:${r.addr}`} row={r} deposit={d.deposit} torn={torn.has(`${piece!.index}:${r.addr}`)} />
+              <LineRow key={`${r.position}:${r.addr}`} row={r} base={d.deposit} torn={torn.has(`${piece!.index}:${r.addr}`)} />
             ))}
           </ol>
           {more > 0 && <span className="text-[17px] text-ink-muted">+{fmtNum(more)} more</span>}
@@ -290,7 +290,7 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
                 rel="noreferrer"
                 className="chip-up rounded-full bg-surface-1 px-3 py-1 text-[17px] font-semibold no-underline"
               >
-                +{fmtNum(lastForfeit.amount)} no-show {lastForfeit.nick} ↗
+                +{fmtNum(lastForfeit.amount)} from ghost {lastForfeit.nick} ↗
               </a>
             )}
             <span className="text-[17px] text-ink-muted">Deposits held by the contract: {fmtNum(held)} tINR</span>

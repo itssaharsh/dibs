@@ -13,6 +13,7 @@ export type ClaimRow = {
   txIndex: number; // position of the tx in its block
   tx: string | null; // null when rebuilt from contract views
   status: RowStatus;
+  deposit: string; // tINR this buyer put down, priced by their record when they called dibs
 };
 
 export type PieceState = {

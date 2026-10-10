@@ -1,35 +1,38 @@
 # Dibs
 
-**Dibs: a claim link for Instagram thrift drops. Buyers tap at once, Monad records the order, and a no-show's deposit pays the seller as the item rolls to #2.**
+**Dibs: a 'BOOK' comment with a deposit behind it. Ghost a seller and it pays them; pay on time and your deposit shrinks at every Dibs store.**
 
 ![The Dibs board live on Railway: #1 torn off as a no-show (50 to the seller), NOW HOLDING 02, every place in line with its block number](docs/board.png)
 
 **Live:** [https://web-production-b1eb0.up.railway.app](https://web-production-b1eb0.up.railway.app) · **Board (projector):** [/board/latest](https://web-production-b1eb0.up.railway.app/board/latest) · **Phone:** [/d/latest](https://web-production-b1eb0.up.railway.app/d/latest) (Railway, one instance).
 
-> You can't pay to jump this queue, the seller can't edit it, and a no-show pays for the wait.
+> Every outcome goes on the buyer's record — paid on time, or ghosted. The contract keeps it from its own outcomes, every Dibs store reads it, and no store can edit it. So reliable buyers put down less, ghosts put down more, and a fresh wallet only ever gets the stranger price.
 
 ## Judge it in 90 seconds
 
-1. Open the board: `/board/latest`.
-2. Open the drop on your phone (scan the QR on the board, or `/d/latest`). A wallet is made for you, with test money. No sign-in.
-3. Tap **Dibs**. Your place appears with the block it landed in, on your phone and on the board.
-4. If you're #1, don't pay. When the timer hits zero your stub tears off, your 50 tINR deposit goes to the seller, and #2 is up.
-5. Presenter: **Run bot round**. 100 scripted wallets claim and abandon, every forfeit pays the seller, and one claim with a 100 gwei tip is refused on chain ("tip above cap").
+1. Open the board: `/board/latest`. Open the drop on your phone (scan the QR, or `/d/latest`). A wallet is made for you, with test money. No sign-in.
+2. Tap **Dibs**. Your call lands with its block number, on your phone and on the board. New buyers put down 50 tINR.
+3. If you get first dibs, don't pay. When the timer hits zero your 50 goes to the seller and the next caller is up.
+4. Presenter: **Start drop**. On the new drop your phone asks for a **100** deposit (you ghosted once). A buyer who paid on time is asked for **25**. The board shows each caller's deposit and record.
+5. Presenter: **Run bot round**. 100 scripted wallets call dibs and ghost: every deposit pays the seller, every one of those wallets now pays double at any Dibs store, and one claim with a 100 gwei tip is refused on chain ("tip above cap").
 
 ## What's real, what's simulated
 
 | | |
 |---|---|
-| Claims, pay, no-show forfeits, withdrawals | **Live on Monad testnet** (chain 10143), one transaction each, signed on the phone |
+| Calls of dibs, payments, ghost forfeits, withdrawals | **Live on Monad testnet** (chain 10143), one transaction each, signed on the phone |
+| Buyer record (paid on time / ghosted) and the deposit it prices | **Live on chain**: `paidCount` / `ghostCount` / `depositFor` in DropHouse |
 | Order of the line | **Chain order**: block, then position in block. Every row links to MonadVision |
 | Money | **tINR, a test token** the app mints. No real rupees |
 | Store | A labelled demo store ("pocket.thrift"); piece pictures are illustrations |
 | Bot round | **Synthetic**: 100 generated wallets, labelled "Bot round — synthetic" on screen |
 | Instagram | Not integrated. The link is what a seller would put in a story |
+| Contract v1 | [0x119d…302f](https://testnet.monadvision.com/address/0x119d4dd7b665717d328dc059daa98b85e7c8302f) (uniform deposits) is superseded by v2 (record-priced deposits) |
 
 ## How it works
 
-- **`DropHouse.sol`** ([verified on MonadVision](https://testnet.monadvision.com/address/0x119d4dd7b665717d328dc059daa98b85e7c8302f)) keeps one line per piece. `claimWithPermit` takes a refundable deposit in one transaction and appends the buyer. The first in line holds the piece for the pay window. `payWithPermit` buys it (the deposit counts toward the price). After the window anyone can call `advance()`: the deposit goes to the seller and the next claimant's turn starts. Once a piece sells, everyone else `withdraw`s their deposit.
+- **The record.** `DropHouse.sol` ([verified on MonadVision](https://testnet.monadvision.com/address/0xb6517ec3d3b676f0ed2e278ef9955fba98352a75)) counts, per wallet, payments made in time and windows that lapsed. `depositFor()` prices every new call from that record: standing = paid − ghosted; 0 (a stranger) puts down the drop's deposit, +1 half, +2 a quarter, −1 double, −2 triple. Nobody reports a ghost: the contract records its own outcomes, so no seller can smear a buyer, and starting a fresh wallet only buys the stranger price.
+- **The drop.** DropHouse also keeps one list of calls per piece. `claimWithPermit` takes a refundable deposit in one transaction and appends the buyer. The first in line holds the piece for the pay window. `payWithPermit` buys it (the deposit counts toward the price). After the window anyone can call `advance()`: the deposit goes to the seller and the next claimant's turn starts. Once a piece sells, everyone else `withdraw`s their deposit.
 - **Tip cap.** Monad leaders order transactions by priority fee, so `claim` reverts with `"tip above cap"` when `tx.gasprice - block.basefee > 2 gwei`. A fee can't buy a place.
 - **Money moves in tINR** ([ERC-20 + permit](https://testnet.monadvision.com/address/0x9266e65380e7f1bd5fc64a9a4f4fb9f1a6acf27c)), never native MON. Monad keeps a 10 MON reserve per account, so small wallets can't send value. **`Funder.sol`** ([verified](https://testnet.monadvision.com/address/0x3f3f1e5fb18c95736f089776352d15e9bc4149f4)) gives up to 50 phones gas MON and tINR in one transaction.
 - **One Next.js server** (Railway) holds a WebSocket to Monad (`newHeads` + `logs`). It pushes the line to every screen over SSE, with a polling fallback for proxies that buffer, so phones never poll the chain. It also funds new wallets, relays the phones' signed transactions across three public RPCs, and runs the keeper that calls `advance()` when a window ends. After a restart it rebuilds state from contract views.
@@ -53,10 +56,12 @@ Contracts: `forge script script/Deploy.s.sol --rpc-url https://testnet-rpc.monad
 
 ## Honest limits
 
-- It doesn't stop a scalper who is willing to pay. It stops people who never meant to pay, and it stops fee-bidding.
+- It doesn't stop a scalper who is willing to pay. It prices people who don't mean to pay, and it stops fee-bidding.
+- A record tied to a wallet is only as strong as the wallet: a ghost can start fresh, but only at the stranger price. A real product would bind the wallet to a phone passkey.
+- The record is public, per wallet, under a nickname. That is the point for sellers; buyers see exactly what sellers see, on their own record page.
 - Real money would need a rupee on-ramp. Everything here is testnet money.
 - Another fast chain could run this. Monad's ~0.4 s blocks are what make it work live, in a room.
-- Next: buyer records, so repeat no-shows put down bigger deposits.
+- Next: bind the wallet to a phone passkey so a record can't be shed, and let each seller choose how steeply the record prices deposits.
 
 ## Built at Monad Blitz Pune V3
 

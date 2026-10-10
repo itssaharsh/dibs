@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Hex, LocalAccount } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import type { BuyerRecord } from "@/lib/record";
 
 export type WalletStatus = "setup" | "ready" | "error";
 const KEY = "dibs.pk";
@@ -12,12 +13,14 @@ export function useBurner() {
   const [status, setStatus] = useState<WalletStatus>("setup");
   const [error, setError] = useState<string | null>(null);
   const nonces = useRef({ nonce: 0, permitNonce: 0 });
+  const [record, setRecord] = useState<BuyerRecord>({ paid: 0, ghosts: 0 });
 
   const sync = useCallback(async (acct: LocalAccount) => {
     const r = await fetch("/api/wallet", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ address: acct.address }) });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error ?? "wallet setup failed");
     nonces.current = { nonce: j.nonce, permitNonce: j.permitNonce };
+    if (j.record) setRecord(j.record);
     return j;
   }, []);
 
@@ -65,7 +68,7 @@ export function useBurner() {
     if (account) await sync(account).catch(() => undefined);
   }, [account, sync]);
 
-  return { account, status, error, retry, take, resync };
+  return { account, status, error, retry, take, resync, record, setRecord };
 }
 
 export type SendResult = { ok: true; hash: Hex } | { ok: false; status: number; error: string };

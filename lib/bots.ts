@@ -10,9 +10,9 @@ import { buildClaim } from "@/lib/tx";
 
 export const BOT_COUNT = 100;
 export const BOT_WINDOW = 3; // seconds: every abandoned claim rolls fast enough to watch
-const BOT_GAS = parseEther("0.05");
+const BOT_GAS = parseEther("0.06");
 const TIPPER_GAS = parseEther("0.1");
-const BOT_TINR = parseEther("100");
+const BOT_TINR = parseEther("200"); // covers a doubled deposit when the same bots come back
 const OVER_TIP = 100_000_000_000n; // 100 gwei, 50× the cap
 
 /** Pure plan: which piece each bot claims (exported for the dry-run test). */
@@ -20,10 +20,11 @@ export function planBots(n = BOT_COUNT, pieces = 2) {
   return Array.from({ length: n }, (_, i) => ({ bot: i, piece: i % pieces }));
 }
 
-const g = globalThis as unknown as { __dibsBots?: { running: boolean; drop: number } };
+type BotState = { running: boolean; drop: number; keys: Hex[]; rounds: number };
+const g = globalThis as unknown as { __dibsBots?: BotState };
 
 export function botState() {
-  return (g.__dibsBots ??= { running: false, drop: 0 });
+  return (g.__dibsBots ??= { running: false, drop: 0, keys: [], rounds: 0 });
 }
 
 export async function runBotRound(ix: Indexer, op: Operator, count = BOT_COUNT): Promise<{ drop: number }> {
@@ -36,7 +37,10 @@ export async function runBotRound(ix: Indexer, op: Operator, count = BOT_COUNT):
     const d = await createDrop({ startsIn: 12, payWindow: BOT_WINDOW, pieces: 2 });
     st.drop = d.id;
     emit("funding", 0);
-    const bots = Array.from({ length: count }, () => privateKeyToAccount(generatePrivateKey()));
+    // the same wallets come back each round, so their record (ghosted last time) prices this round's deposit
+    while (st.keys.length < count) st.keys.push(generatePrivateKey());
+    const bots = st.keys.slice(0, count).map((k) => privateKeyToAccount(k));
+    st.rounds++;
     const tipper = privateKeyToAccount(generatePrivateKey());
     let funded = 0;
     await Promise.all([
@@ -47,9 +51,18 @@ export async function runBotRound(ix: Indexer, op: Operator, count = BOT_COUNT):
     while (ix.chainNow() < d.startsAt + 0.5) await new Promise((r) => setTimeout(r, 100));
     const baseFee = BigInt(ix.head.baseFee);
     const maxFee = (baseFee * 5n) / 4n + 1_000_000_000n;
+    // returning bots have sent transactions before: read each one's nonce (10 at a time, under RPC limits)
+    const nonces: number[] = [];
+    for (let i = 0; i < bots.length; i += 10) {
+      const chunk = await Promise.all(
+        bots.slice(i, i + 10).map((b) => publicClient().getTransactionCount({ address: b.address, blockTag: "pending" }).catch(() => 0)),
+      );
+      nonces.push(...chunk);
+    }
     const signed = await Promise.all(
       planBots(count).map(({ bot, piece }) =>
-        buildClaim(bots[bot], { dropId: d.id, piece, deposit: "50", nonce: 0, permitNonce: 0 }, { maxFee }),
+        // the permit nonce only matters the first time: the allowance it grants is unlimited and stays
+        buildClaim(bots[bot], { dropId: d.id, piece, deposit: "50", nonce: nonces[bot], permitNonce: 0 }, { maxFee }),
       ),
     );
     emit("claiming", 0);

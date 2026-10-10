@@ -25,7 +25,7 @@ contract DropHouseTest is Test {
     uint32 constant WINDOW = 60;
     uint256 dropId;
 
-    event Claimed(uint256 indexed dropId, uint16 indexed piece, address indexed buyer, uint32 position);
+    event Claimed(uint256 indexed dropId, uint16 indexed piece, address indexed buyer, uint32 position, uint96 deposit);
     event TurnStarted(uint256 indexed dropId, uint16 indexed piece, address indexed buyer, uint64 deadline);
     event Forfeited(uint256 indexed dropId, uint16 indexed piece, address indexed buyer, uint96 amount);
 
@@ -64,7 +64,7 @@ contract DropHouseTest is Test {
     function test_orderByBlock() public {
         vm.roll(100);
         vm.expectEmit(true, true, true, true);
-        emit Claimed(dropId, 0, alice, 0);
+        emit Claimed(dropId, 0, alice, 0, DEPOSIT);
         _claim(alice, 0);
         _claim(bob, 0); // same block, next position
         vm.roll(101);
@@ -220,15 +220,54 @@ contract DropHouseTest is Test {
         assertEq(dave.balance, 0.1 ether);
 
         uint256 deadline = block.timestamp + 600;
-        (uint8 v, bytes32 r, bytes32 s) = _permit(0xDA7E, dave, DEPOSIT, deadline);
+        (uint8 v, bytes32 r, bytes32 s) = _permit(0xDA7E, dave, type(uint256).max, deadline);
         vm.prank(dave);
         house.claimWithPermit(dropId, 0, deadline, v, r, s);
         assertEq(tinr.balanceOf(dave), 1000 ether - DEPOSIT);
 
-        (v, r, s) = _permit(0xDA7E, dave, PRICE - DEPOSIT, deadline);
+        // a stale permit (nonce already used) is harmless: the allowance from the first one stands
         vm.prank(dave);
         house.payWithPermit(dropId, 0, deadline, v, r, s);
         assertEq(tinr.balanceOf(seller), PRICE);
+    }
+
+    // The shared record: paying on time halves your deposit at the next drop (any seller); ghosting doubles it.
+    function test_trackRecord() public {
+        _claim(alice, 0);
+        _claim(bob, 1);
+        vm.prank(alice);
+        house.pay(dropId, 0); // alice pays on time
+        vm.warp(block.timestamp + WINDOW + 1);
+        house.advance(dropId, 1); // bob ghosts
+        assertEq(house.paidCount(alice), 1);
+        assertEq(house.ghostCount(bob), 1);
+
+        address otherSeller = makeAddr("otherSeller");
+        vm.prank(otherSeller);
+        uint256 next = house.createDrop(address(tinr), uint64(block.timestamp), WINDOW, PRICE, DEPOSIT, 2);
+        assertEq(house.depositFor(next, alice), DEPOSIT / 2);
+        assertEq(house.depositFor(next, bob), DEPOSIT * 2);
+        assertEq(house.depositFor(next, carol), DEPOSIT); // a stranger
+
+        uint256 aliceBefore = tinr.balanceOf(alice);
+        uint256 bobBefore = tinr.balanceOf(bob);
+        vm.prank(alice);
+        house.claim(next, 0);
+        vm.prank(bob);
+        house.claim(next, 1);
+        assertEq(aliceBefore - tinr.balanceOf(alice), DEPOSIT / 2);
+        assertEq(bobBefore - tinr.balanceOf(bob), DEPOSIT * 2);
+
+        // alice pays the rest of the price on top of her smaller deposit; the seller gets the full price
+        vm.prank(alice);
+        house.pay(next, 0);
+        assertEq(tinr.balanceOf(otherSeller), PRICE);
+        assertEq(house.depositFor(next, alice), DEPOSIT / 4);
+        // the per-claim deposit is what moves: bob ghosts again and forfeits his 100 to the other seller
+        vm.warp(block.timestamp + WINDOW + 1);
+        house.advance(next, 1);
+        assertEq(tinr.balanceOf(otherSeller), PRICE + DEPOSIT * 2);
+        assertEq(house.depositFor(next, bob), DEPOSIT * 3);
     }
 
     function test_funderOnlyOperator() public {

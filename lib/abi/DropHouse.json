@@ -50,6 +50,35 @@
  },
  {
   "type": "function",
+  "name": "claimPos",
+  "inputs": [
+   {
+    "name": "",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "",
+    "type": "uint16",
+    "internalType": "uint16"
+   },
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint32",
+    "internalType": "uint32"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
   "name": "claimWithPermit",
   "inputs": [
    {
@@ -91,17 +120,17 @@
   "name": "claimed",
   "inputs": [
    {
-    "name": "",
+    "name": "dropId",
     "type": "uint256",
     "internalType": "uint256"
    },
    {
-    "name": "",
+    "name": "piece",
     "type": "uint16",
     "internalType": "uint16"
    },
    {
-    "name": "",
+    "name": "buyer",
     "type": "address",
     "internalType": "address"
    }
@@ -161,6 +190,30 @@
  },
  {
   "type": "function",
+  "name": "depositFor",
+  "inputs": [
+   {
+    "name": "dropId",
+    "type": "uint256",
+    "internalType": "uint256"
+   },
+   {
+    "name": "buyer",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint96",
+    "internalType": "uint96"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
   "name": "dropCount",
   "inputs": [],
   "outputs": [
@@ -217,6 +270,44 @@
     "name": "pieces",
     "type": "uint16",
     "internalType": "uint16"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "ghostCount",
+  "inputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint32",
+    "internalType": "uint32"
+   }
+  ],
+  "stateMutability": "view"
+ },
+ {
+  "type": "function",
+  "name": "paidCount",
+  "inputs": [
+   {
+    "name": "",
+    "type": "address",
+    "internalType": "address"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "",
+    "type": "uint32",
+    "internalType": "uint32"
    }
   ],
   "stateMutability": "view"
@@ -370,6 +461,11 @@
       "name": "blockNumber",
       "type": "uint64",
       "internalType": "uint64"
+     },
+     {
+      "name": "deposit",
+      "type": "uint96",
+      "internalType": "uint96"
      }
     ]
    }
@@ -450,6 +546,12 @@
     "type": "uint32",
     "indexed": false,
     "internalType": "uint32"
+   },
+   {
+    "name": "deposit",
+    "type": "uint96",
+    "indexed": false,
+    "internalType": "uint96"
    }
   ],
   "anonymous": false

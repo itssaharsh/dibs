@@ -8,7 +8,8 @@ import { Wordmark } from "@/components/Wordmark";
 import { BUYER_STATES, buyerState, type BuyerState, type Pending } from "@/lib/buyer-state";
 import { addressUrl, txUrl } from "@/lib/chain";
 import { FIXTURE_ME, fixtureSnapshot } from "@/lib/fixtures";
-import { holderOf, mineIn, type PieceState, type Snapshot } from "@/lib/stream-types";
+import { depositFor, recordText, type BuyerRecord } from "@/lib/record";
+import { holderOf, mineIn, type PieceState, type Snapshot, type StreamEvent } from "@/lib/stream-types";
 import { buildClaim, buildPay, buildWithdraw } from "@/lib/tx";
 import { sendRaw, txStatus, useBurner } from "@/lib/useBurner";
 import { fmtClock, fmtNum, useChainClock, useDropStream, useNow } from "@/lib/useDropStream";
@@ -16,8 +17,8 @@ import { fmtClock, fmtNum, useChainClock, useDropStream, useNow } from "@/lib/us
 type PendingTx = NonNullable<Pending> & { raw?: Hex; sentAt?: number; note?: string };
 
 const reasonCopy = (reason: string, kind: PendingTx["kind"]) => {
-  if (/already claimed/.test(reason)) return "Already in line for this piece.";
-  if (/\bsold\b/.test(reason)) return "The line is closed — this piece is sold.";
+  if (/already claimed/.test(reason)) return "You already called dibs on this piece.";
+  if (/\bsold\b/.test(reason)) return "This piece is sold.";
   if (/too late/.test(reason)) return "Too late — the piece moved on.";
   if (/not started/.test(reason)) return "The drop hasn't opened yet.";
   if (kind === "claim") return `Your claim didn't go through: ${reason}. No deposit was taken.`;
@@ -26,8 +27,20 @@ const reasonCopy = (reason: string, kind: PendingTx["kind"]) => {
 
 export function Buyer({ drop, fixture }: { drop: string; fixture: string | null }) {
   const live = !fixture;
-  const { snap: liveSnap, connected } = useDropStream(live ? drop : "");
   const burner = useBurner();
+  const meRef = useRef<string | undefined>(undefined);
+  const { setRecord } = burner;
+  // the record moves with my own outcomes: paying on time or ghosting changes my deposit at every Dibs store
+  const onStream = useCallback(
+    (ev: StreamEvent) => {
+      const mine = meRef.current && "addr" in ev && ev.addr.toLowerCase() === meRef.current.toLowerCase();
+      if (!mine) return;
+      if (ev.type === "paid") setRecord((r) => ({ ...r, paid: r.paid + 1 }));
+      if (ev.type === "forfeited") setRecord((r) => ({ ...r, ghosts: r.ghosts + 1 }));
+    },
+    [setRecord],
+  );
+  const { snap: liveSnap, connected } = useDropStream(live ? drop : "", onStream);
   const now = useNow(250);
   const [featured, setFeatured] = useState(0);
   const [pending, setPending] = useState<Record<number, PendingTx | null>>({});
@@ -49,6 +62,9 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   const chainSec = useChainClock(snap, now);
   const nowSec = Math.floor(chainSec);
   const me = fixture ? FIXTURE_ME : burner.account?.address;
+  useEffect(() => {
+    meRef.current = me;
+  }, [me]);
   const pieces = useMemo(() => snap?.pieces ?? [], [snap]);
   const piece: PieceState | undefined = pieces[featured] ?? pieces[0];
   const d = snap?.drop ?? null;
@@ -65,9 +81,13 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   const holder = piece ? holderOf(piece) : null;
   const ahead = mine && piece ? Math.max(0, mine.position - piece.head) : 0;
   const secsLeft = piece && piece.deadline ? piece.deadline - chainSec : 0;
-  const deposit = d ? fmtNum(d.deposit) : "50";
+  const base = d ? Number(d.deposit) : 50;
+  const record: BuyerRecord = fixture ? { paid: 0, ghosts: 0 } : burner.record;
+  const nextDeposit = d ? depositFor(base, Number(d.price), record) : base;
+  const myDeposit = mine ? Number(mine.deposit) : nextDeposit; // what I put down here, or would
+  const deposit = fmtNum(myDeposit);
   const price = d ? fmtNum(d.price) : "450";
-  const rest = d ? fmtNum(Number(d.price) - Number(d.deposit)) : "400";
+  const rest = d ? fmtNum(Number(d.price) - myDeposit) : "400";
   const opensIn = d ? d.startsAt - chainSec : 0;
 
   // clear a pending tx once the stream shows its effect
@@ -85,7 +105,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
         if (done) {
           next[p.index] = null;
           changed = true;
-          if (pd.kind === "claim" && m) setAnnounce(`You're number ${m.position + 1} in line for ${p.name}.`);
+          if (pd.kind === "claim" && m) setAnnounce(`You called dibs: number ${m.position + 1} for ${p.name}.`);
         }
       }
       return changed ? next : prev;
@@ -171,9 +191,9 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
       case "pre-drop":
         return setReason("The drop isn't open yet. The button turns pink when it opens.");
       case "sold-out":
-        return setReason("The line is closed — this piece is sold.");
+        return setReason("This piece is sold.");
       case "in-line":
-        return setReason("You're already in line for this piece.");
+        return setReason("You already called dibs on this piece.");
       default:
         return;
     }
@@ -190,7 +210,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
       case "live":
         return "DIBS";
       case "claiming":
-        return "Getting in line…";
+        return "Calling dibs…";
       case "in-line":
         return m ? `You're #${m.position + 1} · block ${fmtNum(m.block)}` : "In line";
       case "your-turn":
@@ -234,16 +254,19 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
       return b ? `Sold to #${b.position + 1} (${b.nick})` : "Sold";
     }
     if (mine && state === "in-line") return `You're #${mine.position + 1} — ${ahead} ahead of you`;
-    if (holder) return `${fmtNum(count)} in line · #${holder.position + 1} pays in ${fmtClock(secsLeft)}`;
-    if (count) return `${fmtNum(count)} in line`;
-    return "Be first in line";
+    if (holder) return `${fmtNum(count)} called dibs · #${holder.position + 1} pays in ${fmtClock(secsLeft)}`;
+    if (count) return `${fmtNum(count)} called dibs`;
+    return "Be first to call dibs";
   })();
 
   const consequence =
     state === "your-turn"
-      ? `If you don't pay in ${fmtClock(secsLeft)}, your ${deposit} deposit goes to the seller${piece && piece.queue.length > (mine?.position ?? 0) + 1 ? ` and #${(mine?.position ?? 0) + 2} is up` : ""}.`
+      ? `If you don't pay in ${fmtClock(secsLeft)}, your ${deposit} deposit goes to the seller and your deposit doubles at every Dibs store${piece && piece.queue.length > (mine?.position ?? 0) + 1 ? ` and #${(mine?.position ?? 0) + 2} is up` : ""}.`
       : state === "no-show"
-        ? `Time ran out. Your ${deposit} tINR deposit went to the seller.`
+        ? `You ghosted: your ${deposit} tINR deposit goes to the seller. Your deposit is now ${fmtNum(
+            // the clock can show the lapse a moment before the chain records it: count this ghost either way
+            d ? depositFor(base, Number(d.price), { ...record, ghosts: record.ghosts + (mine?.status === "no-show" ? 0 : 1) }) : base,
+          )} at every Dibs store.`
         : state === "sold-to-other" && piece
           ? `Sold to #${(piece.queue.find((r) => r.status === "won")?.position ?? 0) + 1} (${piece.queue.find((r) => r.status === "won")?.nick ?? "another buyer"}). Your ${deposit} tINR deposit is waiting.`
           : null;
@@ -280,8 +303,18 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
         </div>
         <p className="m-0 text-[15px] leading-snug text-ink-muted">
           {consequence ??
-            `Tap Dibs to get in line. #1 has ${d?.payWindow ?? 60} s to pay — if they don't, their ${deposit} deposit goes to the seller.`}
+            `First dibs has ${d?.payWindow ?? 60} s to pay. Ghost, and your deposit goes to the seller.`}
         </p>
+        {d && (
+          <div className="flex flex-wrap items-baseline gap-x-2 rounded-lg bg-surface-1 px-3 py-2 text-[14px]">
+            <span>
+              Your deposit here: <b className="tabular">{fmtNum(myDeposit)} tINR</b>
+              {myDeposit !== base && <span className="text-ink-muted"> (new buyers: {fmtNum(base)})</span>}
+            </span>
+            <span className="text-ink-muted">· your record: {recordText(record)}</span>
+            <span className="w-full text-[13px] text-ink-muted">Pay on time and it halves at every Dibs store. Ghost and it doubles.</span>
+          </div>
+        )}
       </div>
 
       {live && !connected && snap && <p className="px-4 pt-2 text-sm font-semibold text-ink">Reconnecting to Monad…</p>}
@@ -312,7 +345,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
               <div className="tabular mt-1.5 flex gap-3 text-[15px]">
                 <span>{piece.size}</span>
                 <span className="font-bold">{price} tINR</span>
-                <span className="text-tag-ink-muted">deposit {deposit}</span>
+                <span className="text-tag-ink-muted">your deposit {deposit}</span>
               </div>
             </HangTag>
           </article>
@@ -351,7 +384,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
                     <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setFeatured(p.index)}>
                       <b>{p.name}</b>{" "}
                       <span className="text-ink-muted">
-                        {p.sold ? "sold" : m ? `you're #${m.position + 1}` : `${p.queue.length} in line`}
+                        {p.sold ? "sold" : m ? `you're #${m.position + 1}` : `${p.queue.length} called dibs`}
                       </span>
                     </button>
                     <DibsButton compact state={st} label={st === "live" ? "Dibs" : st === "your-turn" ? "Pay" : st === "sold-to-other" ? "Withdraw" : label(st, p).split(" · ")[0]} onPress={() => press(p, st)} />
@@ -361,7 +394,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
             </div>
           )}
           <Link href={`/d/${d?.id ?? drop}/ticket`} className="mx-4 mt-5 text-sm text-ink-muted underline">
-            Your claim tickets
+            Your record across Dibs stores
           </Link>
         </>
       )}

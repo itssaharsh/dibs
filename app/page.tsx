@@ -4,7 +4,8 @@ import { Wordmark } from "@/components/Wordmark";
 import { addresses, addressUrl } from "@/lib/chain";
 
 const REAL = [
-  ["Claims, pay, no-show forfeits, withdrawals", "live on Monad testnet (chain 10143)"],
+  ["Calls of dibs, payments, ghost forfeits, withdrawals", "live on Monad testnet (chain 10143)"],
+  ["Buyer record (paid on time / ghosted)", "live on chain: kept by the DropHouse contract from its own outcomes"],
   ["Money", "tINR, a test token the app mints — no real rupees"],
   ["Store", "a labelled demo store; piece pictures are illustrations"],
   ["Bot round", "100 scripted wallets, labelled “Bot round — synthetic”"],
@@ -19,10 +20,11 @@ export default function Home() {
         <span className="rounded-full bg-surface-1 px-3 py-1 text-sm text-ink-muted">Monad testnet</span>
       </header>
       <section className="flex flex-col gap-4">
-        <h1 className="display m-0 text-[clamp(28px,5vw,48px)] leading-[1.05]">A fair, self-rolling claim line for Instagram thrift drops.</h1>
-        <p className="m-0 max-w-[640px] text-lg text-ink-muted">
-          Buyers tap at once and Monad records the order — block by block. #1 gets a pay window; if they don&apos;t pay, their deposit goes to the
-          seller and the piece rolls to #2. You can&apos;t pay to jump this queue, the seller can&apos;t edit it, and a no-show pays for the wait.
+        <h1 className="display m-0 text-[clamp(28px,5vw,48px)] leading-[1.05]">A &ldquo;BOOK&rdquo; comment with a deposit behind it.</h1>
+        <p className="m-0 max-w-[680px] text-lg text-ink-muted">
+          Instagram sellers lose drops to buyers who comment BOOK and vanish. On Dibs, calling dibs puts down a deposit. Ghost, and it pays the
+          seller while the piece moves to the next buyer. Every outcome goes on your record, which every Dibs store reads and no store can edit:
+          pay on time and your deposit halves everywhere; ghost and it doubles.
         </p>
         <div className="flex flex-wrap gap-3">
           <Link href="/board/latest" className="sticker flex h-14 items-center px-7 text-lg no-underline">

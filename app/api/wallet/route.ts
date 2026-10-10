@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { formatEther, isAddress, parseEther, type Hex } from "viem";
 import { addresses, publicClient } from "@/lib/chain";
 import { FundOnce } from "@/lib/guards";
-import { FUND_FLOOR, getOperator, MAX_FUNDED, PHONE_GAS, PHONE_TINR, tokenAbi } from "@/lib/operator";
+import { dropHouseAbi, FUND_FLOOR, getOperator, MAX_FUNDED, PHONE_GAS, PHONE_TINR, tokenAbi } from "@/lib/operator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,7 +47,9 @@ export async function POST(req: Request) {
       (g.__dibsTopups ??= new Map()).set(address.toLowerCase(), Date.now());
       topup = await op.fund(address as Hex, PHONE_GAS, 0n);
     }
-    const [nonce, permitNonce, mon, tinr] = await Promise.all([
+    const [paid, ghosts, nonce, permitNonce, mon, tinr] = await Promise.all([
+      c.readContract({ address: addresses.dropHouse, abi: dropHouseAbi, functionName: "paidCount", args: [address as Hex] }) as Promise<number>,
+      c.readContract({ address: addresses.dropHouse, abi: dropHouseAbi, functionName: "ghostCount", args: [address as Hex] }) as Promise<number>,
       c.getTransactionCount({ address: address as Hex, blockTag: "pending" }),
       c.readContract({ address: addresses.token, abi: tokenAbi, functionName: "nonces", args: [address as Hex] }) as Promise<bigint>,
       c.getBalance({ address: address as Hex }),
@@ -56,6 +58,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       funded: true,
       already: already || hash === null,
+      record: { paid: Number(paid), ghosts: Number(ghosts) },
       topup,
       tx: hash,
       nonce,

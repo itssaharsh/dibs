@@ -16,6 +16,7 @@ export function fixtureSnapshot(opts: { claims?: number; head?: number; sold?: b
       addr: addr(i), nick: nick(addr(i)), position: i, block: base + Math.floor(i / 16), txIndex: i % 16,
       tx: `0x${"ab".repeat(31)}${(i % 256).toString(16).padStart(2, "0")}`,
       status: i < h ? "no-show" : i === h ? (sold ? "won" : "holding") : "waiting",
+      deposit: i % 7 === 2 ? "100" : i % 5 === 1 ? "25" : "50",
     }));
   const pieces: PieceState[] = seed.pieces.map((m, i) => {
     const count = i === 0 ? n : i === 1 ? 18 : 9;

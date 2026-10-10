@@ -113,7 +113,7 @@ export class Indexer {
     const pieces: PieceState[] = [];
     for (let i = 0; i < drop.pieceCount; i++) {
       const [head, deadline, sold, buyer] = (await read("pieces", [BigInt(id), i])) as unknown as [number, bigint, boolean, Addr];
-      const q = (await read("queueOf", [BigInt(id), i])) as unknown as { buyer: Addr; blockNumber: bigint }[];
+      const q = (await read("queueOf", [BigInt(id), i])) as unknown as { buyer: Addr; blockNumber: bigint; deposit: bigint }[];
       const queue: ClaimRow[] = [];
       for (let k = 0; k < q.length; k++) {
         let status: ClaimRow["status"] = "waiting";
@@ -124,7 +124,7 @@ export class Indexer {
           const settled = (await read("settled", [BigInt(id), i, q[k].buyer])) as unknown as boolean;
           if (settled) status = "refunded";
         }
-        queue.push({ addr: q[k].buyer, nick: nick(q[k].buyer), position: k, block: Number(q[k].blockNumber), txIndex: -1, tx: null, status });
+        queue.push({ addr: q[k].buyer, nick: nick(q[k].buyer), position: k, block: Number(q[k].blockNumber), txIndex: -1, tx: null, status, deposit: formatEther(q[k].deposit) });
       }
       pieces.push({ ...emptyPiece(i, drop.synthetic), queue, head: Number(head), deadline: Number(deadline), sold, buyer: sold ? buyer : null });
     }
@@ -309,6 +309,7 @@ export class Indexer {
       case "Claimed": {
         const row: ClaimRow = {
           addr, nick: nick(addr), position: Number(a.position), block: Number(log.blockNumber), txIndex: log.transactionIndex, tx, status: "waiting",
+          deposit: formatEther(a.deposit as bigint),
         };
         ev = { type: "claimed", drop: id, piece, row };
         const sent = this.sendTimes.get(tx.toLowerCase());

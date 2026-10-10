@@ -55,10 +55,10 @@ export const addresses = {
 
 /** Gas limits measured with eth_estimateGas on Monad testnet (+~15%); gas is charged on the limit. */
 export const GAS = {
-  claimWithPermit: 320_000n,
-  payWithPermit: 280_000n,
-  withdraw: 150_000n,
-  advance: 200_000n,
+  claimWithPermit: 380_000n, // v2 (per-claim deposit + record): forge 244k, Monad prices cold access higher
+  payWithPermit: 300_000n,
+  withdraw: 160_000n,
+  advance: 220_000n,
   createDrop: 160_000n,
 };
 export const TIP = 1_000_000_000n; // 1 gwei, under DropHouse.MAX_TIP (2 gwei)
