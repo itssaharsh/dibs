@@ -23,7 +23,7 @@ export function StatsStrip({ stats, synthetic, bots }: { stats: Stats; synthetic
           {stats.spanMs > 0 && <Item v={`${(stats.spanMs / 1000).toFixed(1)} s`} l="first → last block" />}
           {stats.medianSendToSeenMs > 0 && <Item v={`${(stats.medianSendToSeenMs / 1000).toFixed(1)} s`} l="tap → confirmed (median)" />}
           {stats.forfeits > 0 && (
-            <Item v={fmtNum(stats.forfeits)} l={stats.forfeits === 1 ? "ghost paid the seller — now pays 2× at every Dibs store" : "ghosts paid the seller — now pay 2× at every Dibs store"} />
+            <Item v={fmtNum(stats.forfeits)} l={stats.forfeits === 1 ? "ghost paid the seller — their deposit just went up at every Dibs store" : "ghosts paid the seller — their deposits just went up at every Dibs store"} />
           )}
         </>
       )}

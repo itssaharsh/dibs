@@ -221,10 +221,10 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
               </div>
               <HangTag className="-mt-9 ml-[18px] w-[86%] px-[18px] pb-3.5 pt-[24px]">
                 <div className="display text-[26px] leading-tight">{piece.name}</div>
-                <div className="tabular mt-1.5 flex gap-4 whitespace-nowrap text-lg">
+                <div className="tabular mt-1.5 flex flex-wrap gap-x-4 text-lg">
                   <span>Size {piece.size}</span>
                   <span className="font-bold">{fmtNum(d.price)} tINR</span>
-                  <span className="text-tag-ink-muted">deposit {fmtNum(d.deposit)}, priced by record</span>
+                  <span className="text-tag-ink-muted">new-buyer deposit {fmtNum(d.deposit)}</span>
                 </div>
               </HangTag>
             </article>
