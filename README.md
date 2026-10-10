@@ -81,7 +81,7 @@ Contracts: `forge script script/Deploy.s.sol --rpc-url https://testnet-rpc.monad
 
 Planning (idea, UI spec, contract, architecture and task plan) was written before the build block; every line of code and the first commit came after it opened.
 
-Forked from [monad-developers/monad-blitz-pune](https://github.com/monad-developers/monad-blitz-pune) as the event asks; the three template commits are the organisers'. Every commit by our team is after the build block opened.
+This repo started from the event's fork template; every commit here is ours, made after the build block opened.
 
 **AI tools used:** Claude Code (Claude Opus) wrote and tested the code from the team's plan, deployed the contracts and ran the live checks. The decisions and the pitch are the team's.
 
