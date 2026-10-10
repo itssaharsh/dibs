@@ -48,9 +48,9 @@ export function LedPanel(props: {
           </>
         ) : mode === "waiting" ? (
           <>
-            <span className="display text-[30px] leading-tight">The line opens soon</span>
+            <span className="display text-[30px] leading-tight">Dibs opens soon</span>
             <span className="text-[17px] text-led-label">
-              {opensAt ? `The line opens at ${new Date(opensAt * 1000).toLocaleTimeString("en-IN", { hour12: false })}` : "Waiting for the drop"}
+              {opensAt ? `Opens at ${new Date(opensAt * 1000).toLocaleTimeString("en-IN", { hour12: false })}. Tap the pink button when it does.` : "Waiting for the drop"}
             </span>
           </>
         ) : mode === "disconnected" ? (

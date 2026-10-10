@@ -8,7 +8,7 @@ const REAL = [
   ["Buyer record (paid on time / ghosted)", "live on chain: kept by the DropHouse contract from its own outcomes"],
   ["Money", "tINR, a test token the app mints — no real rupees"],
   ["Store", "a labelled demo store; piece pictures are illustrations"],
-  ["Bot round", "100 scripted wallets, labelled “Bot round — synthetic”"],
+  ["Bot round", "scripted wallets (up to 100, sized to the test MON left), labelled “Bot round — synthetic”"],
   ["Instagram", "not integrated; the link is what a seller would put in a story"],
 ];
 

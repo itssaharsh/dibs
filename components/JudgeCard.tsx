@@ -4,7 +4,7 @@ export function JudgeCard() {
       <li><b>1</b> Open the board, then the drop on your phone (QR). Tap Dibs.</li>
       <li><b>2</b> If you get first dibs, don&apos;t pay. Your deposit pays the seller and the piece moves on.</li>
       <li><b>3</b> Start a new drop: your phone now asks for a 100 deposit; a buyer who paid asks for 25.</li>
-      <li><b>4</b> Run the bot round: 100 wallets ghost, pay the seller, and now pay 2× at every Dibs store.</li>
+      <li><b>4</b> Run the bot round: scripted wallets ghost, pay the seller, and put down double next time.</li>
     </ol>
   );
 }

@@ -222,7 +222,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
       case "claiming":
         return "Calling dibs…";
       case "in-line":
-        return m ? `You're #${m.position + 1} · block ${fmtNum(m.block)}` : "In line";
+        return m ? `You're #${m.position + 1} · block ${fmtNum(m.block)}` : "Dibs called";
       case "your-turn":
         return `PAY ${rest} tINR · ${fmtClock(left)}`;
       case "paying":

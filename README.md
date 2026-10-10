@@ -20,7 +20,7 @@
 2. Tap **Dibs**. Your call lands with its block number, on your phone and on the board. New buyers put down 50 tINR.
 3. If you get first dibs, don't pay. When the timer hits zero your 50 goes to the seller and the next caller is up.
 4. Presenter: **Start drop**. On the new drop your phone asks for a **100** deposit (you ghosted once). A buyer who paid on time is asked for **25**. The board shows each caller's deposit and record.
-5. Presenter: **Run bot round**. 100 scripted wallets call dibs and ghost: every deposit pays the seller, every one of those wallets now pays double at any Dibs store, and one claim with a 100 gwei tip is refused on chain ("tip above cap").
+5. Presenter: **Run bot round**. Scripted wallets (up to 100, sized to the test MON the operator can spend) call dibs and ghost: every deposit pays the seller, every one of those wallets puts down double at any Dibs store next time, and one claim with a 100 gwei tip is refused on chain ("tip above cap").
 
 ## What's real, what's simulated
 
@@ -44,7 +44,7 @@
 - **One Next.js server** (Railway) holds a WebSocket to Monad (`newHeads` + `logs`). It pushes the line to every screen over SSE, with a polling fallback for proxies that buffer, so phones never poll the chain. It also funds new wallets, relays the phones' signed transactions across three public RPCs, and runs the keeper that calls `advance()` when a window ends. After a restart it rebuilds state from contract views.
 - **Chain time.** Monad block timestamps trail wall clocks by about a second. Drop start, countdowns and the keeper all use the last block's timestamp, not the device clock. Without this, early claims revert with "not started".
 
-Measured on testnet today: 100 bot claims landed across 10 blocks in 2.9 s. The median from relay to the claim being seen on the stream was 0.4 s. A phone shows its place about 1.4 s after the tap.
+Measured on testnet today: 100 bot claims landed across 10 blocks in 2.9 s (on the first contract version; v2 rounds ran with 6 to 10 bots). The median from relay to the claim being seen on the stream was 0.4 s. A phone shows its place about 1.4 s after the tap.
 
 ## Run it
 
