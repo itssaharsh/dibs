@@ -30,7 +30,7 @@ export function StatsStrip({ stats, synthetic, bots }: { stats: Stats; synthetic
       <Item v="2 gwei" l="tip cap" />
       <span className="font-semibold">Fees can&apos;t buy a place</span>
       {stats.tipRefused > 0 && <span className="rounded-full bg-canvas px-3 py-1 font-semibold">{stats.tipRefused} over-cap tip refused</span>}
-      {synthetic && <span className="rounded-full bg-ink px-3 py-1 text-sm font-semibold text-canvas">Bot round — 100 scripted wallets (synthetic)</span>}
+      {synthetic && <span className="rounded-full bg-ink px-3 py-1 text-sm font-semibold text-canvas">Bot round — {stats.claims > 0 ? `${fmtNum(stats.claims)} ` : ""}scripted wallets (synthetic)</span>}
       {bots && <span className="text-base text-ink-muted">{bots}</span>}
     </footer>
   );

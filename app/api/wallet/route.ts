@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { formatEther, isAddress, parseEther, type Hex } from "viem";
-import { addresses, publicClient } from "@/lib/chain";
+import { addresses, maxFeeFor, publicClient } from "@/lib/chain";
 import { FundOnce } from "@/lib/guards";
-import { dropHouseAbi, FUND_FLOOR, getOperator, MAX_FUNDED, PHONE_GAS, PHONE_TINR, tokenAbi } from "@/lib/operator";
+import { affordable, dropHouseAbi, getOperator, MAX_FUNDED, PHONE_GAS, PHONE_TINR, tokenAbi } from "@/lib/operator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ function fundOnce() {
       address: addresses.token, abi: tokenAbi, functionName: "balanceOf", args: [addr as Hex],
     })) as bigint;
     if (tinr >= PHONE_TINR / 10n) return null;
-    if ((op.lastBalance || (await op.balance())) < FUND_FLOOR) throw Object.assign(new Error("operator low"), { status: 503 });
+    if (affordable(op.lastBalance || (await op.balance()), PHONE_GAS, maxFeeFor(op.baseFee), 1) < 1) throw Object.assign(new Error("operator low"), { status: 503 });
     const hash = await op.fund(addr as Hex);
     void op.balance();
     return hash;
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     const op = getOperator();
     const bal = await c.getBalance({ address: address as Hex });
     const last = g.__dibsTopups?.get(address.toLowerCase()) ?? 0;
-    if (op && bal < LOW_GAS && Date.now() - last > 60_000 && (op.lastBalance || (await op.balance())) >= FUND_FLOOR) {
+    if (op && bal < LOW_GAS && Date.now() - last > 60_000 && affordable(op.lastBalance || (await op.balance()), PHONE_GAS, maxFeeFor(op.baseFee), 1) >= 1) {
       (g.__dibsTopups ??= new Map()).set(address.toLowerCase(), Date.now());
       topup = await op.fund(address as Hex, PHONE_GAS, 0n);
     }

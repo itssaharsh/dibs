@@ -17,8 +17,22 @@ export const dropHouseAbi = DropHouseAbi as typeof DropHouseAbi;
 export const funderAbi = FunderAbi as typeof FunderAbi;
 export const tokenAbi = TestRupeeAbi as typeof TestRupeeAbi;
 
-export const RESERVE = parseEther("10");
-export const FUND_FLOOR = parseEther("12"); // refuse funding below this (Monad keeps 10 MON reserve per EOA)
+export const RESERVE = parseEther("10"); // Monad: a value transfer that leaves the sender under 10 MON reverts
+export const RESERVE_MARGIN = parseEther("0.05");
+const FUND_GAS_BASE = 80_000n;
+const FUND_GAS_EACH = 140_000n; // upper bound per wallet (new account + first mint); the real limit is estimated
+
+/** MON the wallet can still send as value while staying above the reserve. The reserve is parked, not spent. */
+export const spendable = (balance: bigint) => (balance > RESERVE + RESERVE_MARGIN ? balance - RESERVE - RESERVE_MARGIN : 0n);
+
+/** How many wallets one funding batch can cover (value + worst-case gas) without dipping under the reserve. */
+export function affordable(balance: bigint, gasEach: bigint, maxFee: bigint, want: number): number {
+  const room = spendable(balance) - FUND_GAS_BASE * maxFee;
+  if (room <= 0n) return 0;
+  const each = gasEach + FUND_GAS_EACH * maxFee;
+  const n = Number(room / each);
+  return Math.max(0, Math.min(want, n));
+}
 export const PHONE_GAS = parseEther("0.15"); // one claim + pay + withdraw, or two claims + pay
 export const PHONE_TINR = parseEther("1000");
 export const MAX_FUNDED = 400;
@@ -135,17 +149,25 @@ export class Operator {
     if (!this.pending.length) return;
     // one batch per (gas, tinr) pair
     const first = this.pending[0];
-    const batch = this.pending.filter((p) => p.gas === first.gas && p.tinr === first.tinr).slice(0, 50);
+    let batch = this.pending.filter((p) => p.gas === first.gas && p.tinr === first.tinr).slice(0, 50);
     this.pending = this.pending.filter((p) => !batch.includes(p));
     try {
+      // fund only as many as the wallet can send while staying above Monad's 10 MON reserve
+      const fit = affordable(await this.balance(), first.gas, maxFeeFor(this.baseFee), batch.length);
+      const low = Object.assign(new Error("operator low"), { status: 503 });
+      batch.slice(fit).forEach((b) => b.reject(low));
+      batch = batch.slice(0, fit);
+      if (!batch.length) return;
       const to = batch.map((b) => b.addr);
       const data = encodeFunctionData({ abi: funderAbi, functionName: "fund", args: [to, first.gas, first.tinr] });
-      const hash = await this.sendTx({
-        to: addresses.funder,
-        data,
-        value: first.gas * BigInt(batch.length),
-        gas: 80_000n + 140_000n * BigInt(batch.length),
-      });
+      const value = first.gas * BigInt(batch.length);
+      // gas is charged on the limit: estimate it (returning wallets cost far less than new ones), keep the formula as the cap
+      const cap = FUND_GAS_BASE + FUND_GAS_EACH * BigInt(batch.length);
+      const est = await publicClient()
+        .estimateGas({ account: this.address, to: addresses.funder, data, value })
+        .catch(() => cap);
+      const gas = est * 12n / 10n < cap ? est * 12n / 10n : cap;
+      const hash = await this.sendTx({ to: addresses.funder, data, value, gas });
       const r = await publicClient().waitForTransactionReceipt({ hash, pollingInterval: 250, timeout: 30_000 });
       if (r.status !== "success") throw new Error(`funding tx reverted ${hash}`);
       batch.forEach((b) => b.resolve(hash));

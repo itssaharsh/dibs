@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { formatEther } from "viem";
 import { getIndexer } from "@/lib/indexer";
 import { sseClients } from "@/lib/hub";
-import { FUND_FLOOR, getOperator } from "@/lib/operator";
+import { affordable, getOperator, PHONE_GAS, spendable } from "@/lib/operator";
+import { maxFeeFor } from "@/lib/chain";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,11 +16,13 @@ export async function GET() {
     bal = op ? await op.balance() : null;
   } catch {}
   const lag = ix.head.block ? ix.head.block - Number(ix.lastScanned) : null;
-  const ok = !!op && bal !== null && bal >= FUND_FLOOR && lag !== null && lag < 60;
+  // "low" = can't fund even one more phone without dipping under Monad's 10 MON reserve
+  const phones = op && bal !== null ? affordable(bal, PHONE_GAS, maxFeeFor(op.baseFee), 400) : 0;
+  const ok = !!op && bal !== null && lag !== null && lag < 60;
   return NextResponse.json(
     {
       ok,
-      operator: op ? { address: op.address, mon: bal === null ? null : formatEther(bal), low: bal !== null && bal < FUND_FLOOR, sent: op.sent } : null,
+      operator: op ? { address: op.address, mon: bal === null ? null : formatEther(bal), low: phones === 0, spendable: bal === null ? null : formatEther(spendable(bal)), phonesAffordable: phones, sent: op.sent } : null,
       indexer: {
         head: ix.head.block,
         lastScanned: Number(ix.lastScanned),
