@@ -1,9 +1,9 @@
 # Build state - dibs
-Updated: 2026-10-10 14:40 IST | mode: hackathon | phase: BUILT, deployed from the laptop; Railway pending login
+Updated: 2026-10-10 14:52 IST | mode: hackathon | phase: BUILT and DEPLOYED on Railway
 
 ## Now
 - Built: contracts (deployed + verified), server (WS indexer, SSE + polling fallback, wallet funding, relay, keeper, admin, bot round), buyer/board/seller/landing/ticket pages, e2e.
-- Live: https://stan-calgary-broke-oak.trycloudflare.com (prod `npm start` on :3002 + cloudflared quick tunnel). Quick tunnels buffer SSE, so phones fall back to polling (~2.5 s tap→place vs ~1.4 s direct).
+- Live: https://web-production-b1eb0.up.railway.app (Railway project 'dibs', service 'web', one instance; redeploy with `railway up --service web --ci`). The laptop server and tunnel are stopped: only ONE process may hold OPERATOR_PK.
 - Fork: github.com/itssaharsh/dibs (main pushed, description = one-liner).
 - Backup take: ~/dibs-takes/backup-1.mp4 (63.8 s).
 
@@ -20,6 +20,4 @@ E0018-21 forge 8/8 · E0022-23 deploy+verify · E0024-29 server tests · E0030 5
 - Cloudflare quick tunnel buffers SSE: polling fallback (/api/poll) kicks in after 4 s.
 
 ## Exact next step
-1. Railway: approve the CLI login, then `railway init` + variables from .env + `railway up` (or dashboard: deploy itssaharsh/dibs, set .env.example vars, one replica). Then put the Railway URL in README and push.
-2. Only ONE server may run with OPERATOR_PK (nonce queue): stop the laptop server when Railway is live.
-3. At the venue: `SP=/tmp node scripts/burst.mjs <url> 10`; real photos into public/pieces/; final take (T15); Blitz Portal submission (T16).
+1. At the venue: `SP=/tmp node scripts/burst.mjs <url> 10`; real photos into public/pieces/; final take (T15); Blitz Portal submission (T16).
