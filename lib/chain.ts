@@ -5,6 +5,7 @@ import {
   http,
   type PublicClient,
 } from "viem";
+import deployment from "@/deployments/testnet.json";
 
 // Monad testnet public endpoints (docs.monad.xyz, read 2026-10-10):
 // QuickNode 50 rps (eth_call 25 rps) · Ankr 300 per 10 s · Monad Foundation 20 rps, no batch.
@@ -41,6 +42,29 @@ export const monadTestnet = defineChain({
   },
   testnet: true,
 });
+
+type Hex = `0x${string}`;
+
+/** Deployed addresses (public). NEXT_PUBLIC_* env overrides deployments/testnet.json. */
+export const addresses = {
+  dropHouse: (process.env.NEXT_PUBLIC_DROPHOUSE || deployment.dropHouse) as Hex,
+  token: (process.env.NEXT_PUBLIC_TOKEN || deployment.token) as Hex,
+  funder: (process.env.NEXT_PUBLIC_FUNDER || deployment.funder) as Hex,
+  deployBlock: BigInt(process.env.DEPLOY_BLOCK || deployment.deployBlock),
+};
+
+/** Gas limits measured with eth_estimateGas on Monad testnet (+~15%); gas is charged on the limit. */
+export const GAS = {
+  claimWithPermit: 320_000n,
+  payWithPermit: 280_000n,
+  withdraw: 150_000n,
+  advance: 200_000n,
+  createDrop: 160_000n,
+};
+export const TIP = 1_000_000_000n; // 1 gwei, under DropHouse.MAX_TIP (2 gwei)
+export const MIN_BASE_FEE = 100_000_000_000n; // 100 gwei
+export const maxFeeFor = (baseFee: bigint = MIN_BASE_FEE) =>
+  (baseFee > MIN_BASE_FEE ? baseFee : MIN_BASE_FEE) * 2n + TIP;
 
 export const txUrl = (hash: string) => `${EXPLORER_URL}/tx/${hash}`;
 export const addressUrl = (addr: string) => `${EXPLORER_URL}/address/${addr}`;

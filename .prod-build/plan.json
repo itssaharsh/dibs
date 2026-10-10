@@ -126,8 +126,14 @@
         "forge test --root contracts --gas-report"
       ],
       "rollback": "git revert the T02 commit; nothing deployed yet",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "[2026-10-10 done] verified E0018-E0021",
+      "evidence": [
+        "E0018",
+        "E0019",
+        "E0020",
+        "E0021"
+      ]
     },
     {
       "id": "T03",
@@ -158,8 +164,11 @@
         "observe: the three contracts open as verified on testnet.monadvision.com"
       ],
       "rollback": "redeploy; addresses are config, no state to migrate",
-      "status": "todo",
-      "notes": ""
+      "status": "done",
+      "notes": "[2026-10-10 done] E0022-E0023",
+      "evidence": [
+        "E0022"
+      ]
     },
     {
       "id": "T04",
@@ -210,8 +219,10 @@
         "npm test -- send-guard"
       ],
       "rollback": "git revert; the chain holds the state",
-      "status": "todo",
-      "notes": ""
+      "status": "doing",
+      "notes": "[2026-10-10 start]",
+      "base": "2ae305a",
+      "started_after": 23
     },
     {
       "id": "T05",
