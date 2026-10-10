@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { formatEther, isAddress, type Hex } from "viem";
+import { formatEther, isAddress, parseEther, type Hex } from "viem";
 import { addresses, publicClient } from "@/lib/chain";
 import { FundOnce } from "@/lib/guards";
-import { FUND_FLOOR, getOperator, MAX_FUNDED, PHONE_TINR, tokenAbi } from "@/lib/operator";
+import { FUND_FLOOR, getOperator, MAX_FUNDED, PHONE_GAS, PHONE_TINR, tokenAbi } from "@/lib/operator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const g = globalThis as unknown as { __dibsFundOnce?: FundOnce<Hex | null> };
+const g = globalThis as unknown as { __dibsFundOnce?: FundOnce<Hex | null>; __dibsTopups?: Map<string, number> };
+const LOW_GAS = parseEther("0.07");
 
 function fundOnce() {
   g.__dibsFundOnce ??= new FundOnce<Hex | null>(async (addr) => {
@@ -37,6 +38,15 @@ export async function POST(req: Request) {
   try {
     const hash = await promise;
     const c = publicClient();
+    // a phone reused across drops can run low on gas: top it up (gas only), at most once a minute
+    let topup: Hex | null = null;
+    const op = getOperator();
+    const bal = await c.getBalance({ address: address as Hex });
+    const last = g.__dibsTopups?.get(address.toLowerCase()) ?? 0;
+    if (op && bal < LOW_GAS && Date.now() - last > 60_000 && (op.lastBalance || (await op.balance())) >= FUND_FLOOR) {
+      (g.__dibsTopups ??= new Map()).set(address.toLowerCase(), Date.now());
+      topup = await op.fund(address as Hex, PHONE_GAS, 0n);
+    }
     const [nonce, permitNonce, mon, tinr] = await Promise.all([
       c.getTransactionCount({ address: address as Hex, blockTag: "pending" }),
       c.readContract({ address: addresses.token, abi: tokenAbi, functionName: "nonces", args: [address as Hex] }) as Promise<bigint>,
@@ -46,6 +56,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       funded: true,
       already: already || hash === null,
+      topup,
       tx: hash,
       nonce,
       permitNonce: Number(permitNonce),
