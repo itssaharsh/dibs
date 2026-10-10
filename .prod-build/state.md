@@ -1,5 +1,5 @@
 # Build state - dibs
-Updated: 2026-10-10 14:52 IST | mode: hackathon | phase: BUILT and DEPLOYED on Railway
+Updated: 2026-10-10 16:00 IST | mode: hackathon | phase: v2 (shared buyer record) BUILT and DEPLOYED on Railway
 
 ## Now
 - Built: contracts (deployed + verified), server (WS indexer, SSE + polling fallback, wallet funding, relay, keeper, admin, bot round), buyer/board/seller/landing/ticket pages, e2e.
@@ -8,10 +8,13 @@ Updated: 2026-10-10 14:52 IST | mode: hackathon | phase: BUILT and DEPLOYED on R
 - Backup take: ~/dibs-takes/backup-1.mp4 (63.8 s).
 
 ## Addresses (Monad testnet 10143)
-DropHouse 0x119d4dd7b665717d328dc059daa98b85e7c8302f · tINR 0x9266e65380e7f1bd5fc64a9a4f4fb9f1a6acf27c · Funder 0x3f3f1e5fb18c95736f089776352d15e9bc4149f4 · deploy block 69775604 · operator 0xB99CE2Cc7E3fDaf405fa4f807642B39A3590d7B1
+DropHouse v2 0xb6517ec3d3b676f0ed2e278ef9955fba98352a75 (v1 0x119d…302f superseded) · tINR 0x9266e65380e7f1bd5fc64a9a4f4fb9f1a6acf27c · Funder 0x3f3f1e5fb18c95736f089776352d15e9bc4149f4 · deploy block 69796067 · operator 0xB99CE2Cc7E3fDaf405fa4f807642B39A3590d7B1
 
 ## What worked (evidence)
 E0018-21 forge 8/8 · E0022-23 deploy+verify · E0024-29 server tests · E0030 5 live phones · E0031 100-bot round · E0032 pay/withdraw · E0033 e2e 14/14 · E0034 backup take
+
+## Re-aim (15:25–16:00 IST)
+- v1 read as "BookMyShow on blockchain". v2: every outcome goes on the buyer's record (paidCount / ghostCount in DropHouse); depositFor() prices each call: paid on time halves it, ghosting doubles it, at every drop. One-liner, board, phone, README re-worded (no ticket / queue / token-board language). Evidence E0039–E0041.
 
 ## What failed (do not repeat)
 - viem watchBlocks over WS on Monad → onBlock(undefined): use raw eth_subscribe.

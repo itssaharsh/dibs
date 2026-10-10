@@ -2,7 +2,7 @@
 
 **Dibs: a 'BOOK' comment with a deposit behind it. Ghost a seller and it pays them; pay on time and your deposit shrinks at every Dibs store.**
 
-![The Dibs board live on Railway: #1 torn off as a no-show (50 to the seller), NOW HOLDING 02, every place in line with its block number](docs/board.png)
+![The Dibs board live on Railway: three buyers called dibs on one jacket and each put down a deposit priced by their own record — 25 (paid on time before), 50 (new buyer), 100 (ghosted before) — with the block each call landed in](docs/board.png)
 
 **Live:** [https://web-production-b1eb0.up.railway.app](https://web-production-b1eb0.up.railway.app) · **Board (projector):** [/board/latest](https://web-production-b1eb0.up.railway.app/board/latest) · **Phone:** [/d/latest](https://web-production-b1eb0.up.railway.app/d/latest) (Railway, one instance).
 

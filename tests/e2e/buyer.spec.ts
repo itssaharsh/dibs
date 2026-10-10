@@ -4,7 +4,7 @@ const phone = { width: 390, height: 844 };
 const states: Record<string, RegExp> = {
   "pre-drop": /Opens in/,
   live: /DIBS/,
-  claiming: /Getting in line/,
+  claiming: /Calling dibs/,
   "in-line": /You're #4/,
   "your-turn": /PAY 400 tINR/,
   paying: /Paying/,
@@ -32,7 +32,8 @@ for (const [state, label] of Object.entries(states)) {
 test("rule line and no horizontal scroll at 320", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await page.goto("/d/1?state=live");
-  await expect(page.getByText(/Tap Dibs to get in line/)).toBeVisible();
+  await expect(page.getByText(/First dibs has 60 s to pay/)).toBeVisible();
+  await expect(page.getByText(/Your deposit here/)).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
@@ -41,7 +42,7 @@ test("board states render", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   for (const s of ["waiting", "live", "rolled", "sold", "disconnected"]) {
     await page.goto(`/board/1?state=${s}`);
-    await expect(page.getByText(/NOW HOLDING|SOLD TO/).first()).toBeVisible();
+    await expect(page.getByText(/FIRST DIBS|SOLD TO/).first()).toBeVisible();
     await expect(page.getByText("Scan to join the drop")).toBeVisible();
   }
 });

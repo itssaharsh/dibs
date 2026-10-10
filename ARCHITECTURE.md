@@ -1,5 +1,5 @@
 # Architecture — Dibs
-Mode: hackathon. Last structural change: 2026-10-10 (planning, before the build block).
+Mode: hackathon. Last structural change: 2026-10-10 15:40 IST — DropHouse v2: a shared buyer record prices every deposit (re-aim from "fair queue" to "a BOOK comment with a deposit behind it").
 
 ## Overview
 A seller shares a drop link; buyers' phones claim pieces on Monad testnet with their own burner wallets; one Next.js
@@ -18,7 +18,15 @@ the keeper that rolls a piece to the next claimant when a pay window ends. The c
 | Send relay `/api/send` | accept a buyer's raw signed tx, forward to RPCs round-robin with retry | viem `sendRawTransaction` | spread load over public RPC limits | all RPCs fail → 502 with reason; phone retries the same signed tx |
 | Buyer, board, seller pages | UI-SPEC S0–S3 | React 19, Tailwind 4, Motion, qrcode.react | the product | stream lost → greyed last state + reconnect |
 
-## Contract interface (the agreed boundary; T02 writes it first)
+## Contract interface (v2, deployed 0xb6517ec3d3b676f0ed2e278ef9955fba98352a75; the block below is v1 as planned)
+v2 changes, all in `contracts/src/DropHouse.sol`:
+- `mapping(address => uint32) paidCount, ghostCount` — the shared record, written only by `pay` (paid in time) and `advance` (window lapsed).
+- `depositFor(dropId, buyer) view returns (uint96)` — standing = paid − ghosted: 0 → the drop's deposit, +1 → half, ≥ +2 → a quarter, −1 → 2×, −2 → 3×, ≤ −3 → 4× (capped at the price).
+- `Claim` stores the `deposit` each buyer put down; pay, forfeit and refund move that amount.
+- `event Claimed(dropId, piece, buyer, position, deposit)` — the deposit is in the event, so the board shows each caller's price.
+- `claimWithPermit` / `payWithPermit` take one unlimited tINR allowance for DropHouse (test money); a used or front-run permit is harmless.
+- `claimPos(dropId, piece, buyer)` (position + 1) replaces the `claimed` mapping; `claimed()` remains as a view.
+
 ```solidity
 uint256 public constant MAX_TIP = 2 gwei;                    // tx.gasprice - block.basefee must be <= MAX_TIP
 function createDrop(address token, uint64 startsAt, uint32 payWindow, uint96 price, uint96 deposit, uint16 pieces) returns (uint256 dropId)
