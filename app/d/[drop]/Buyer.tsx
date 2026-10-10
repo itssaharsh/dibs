@@ -344,7 +344,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
           <article aria-label={piece.name} className="relative mx-4 mt-3">
             <div className="relative overflow-hidden rounded-[14px] bg-surface-1" style={{ aspectRatio: "4 / 4.3" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={piece.photo} alt={`${piece.name}, size ${piece.size} (illustration)`} className="h-full w-full object-cover" />
+              <img src={piece.photo} alt={`${piece.name}, size ${piece.size}${piece.photo.startsWith("/pieces/") ? " (illustration)" : ""}`} className="h-full w-full object-cover" />
               <span
                 className="absolute right-3 top-3 rounded-full px-2.5 py-0.5 text-[13px] font-bold"
                 style={{

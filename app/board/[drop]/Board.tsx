@@ -218,7 +218,7 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
             <article aria-label={piece.name} className="flex flex-col">
               <div className="relative h-[230px] overflow-hidden rounded-t-[14px] bg-surface-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={piece.photo} alt={`${piece.name} (illustration)`} className="h-full w-full object-contain" />
+                <img src={piece.photo} alt={`${piece.name}${piece.photo.startsWith("/pieces/") ? " (illustration)" : ""}`} className="h-full w-full object-contain" />
                 <span
                   className="absolute right-3.5 top-3.5 rounded-full px-2.5 py-1 text-[15px] font-bold"
                   style={{ background: piece.sold ? "var(--ink)" : opensIn > 0 ? "var(--led-bg)" : "var(--success)", color: opensIn > 0 && !piece.sold ? "var(--led)" : "#fff" }}

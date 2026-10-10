@@ -73,6 +73,7 @@ export type StreamEvent =
   | { type: "stats"; drop: number; stats: Stats }
   | { type: "seller"; drop: number; balance: string }
   | { type: "bots"; drop: number; phase: string; done: number; total: number; note?: string }
+  | { type: "meta"; drop: number; pieces: { index: number; name: string; size: string; photo: string }[] } // the seller's listing
   | ChainEvent;
 
 export const emptyStats = (): Stats => ({
@@ -160,6 +161,9 @@ export function applyStream(s: Snapshot | null, ev: StreamEvent): Snapshot | nul
       return s.drop && ev.drop === s.drop.id ? { ...s, seller: { ...s.seller, balance: ev.balance } } : s;
     case "bots":
       return s;
+    case "meta":
+      if (!s.drop || ev.drop !== s.drop.id) return s;
+      return { ...s, pieces: s.pieces.map((p) => ({ ...p, ...(ev.pieces.find((m) => m.index === p.index) ?? {}) })) };
     default:
       return s.drop && ev.drop === s.drop.id ? { ...s, pieces: applyEvent(s.pieces, ev) } : s;
   }

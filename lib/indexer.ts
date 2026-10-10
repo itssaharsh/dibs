@@ -3,6 +3,7 @@ import seed from "@/seed/drop.json";
 import { addresses, publicClient, rpcWsUrl } from "@/lib/chain";
 import { nick } from "@/lib/nick";
 import { dropHouseAbi, tokenAbi } from "@/lib/operator";
+import { getStore, type Product } from "@/lib/store";
 import {
   applyEvent,
   emptyStats,
@@ -28,15 +29,16 @@ type DropEntry = {
   sellerBalance: bigint;
 };
 
-export function pieceMeta(index: number, synthetic: boolean) {
+export function pieceMeta(index: number, synthetic: boolean, listed?: Product[]) {
+  if (listed?.[index]) return { name: listed[index].name, size: listed[index].size, photo: listed[index].photo };
   const list = seed.pieces;
   const m = list[(synthetic ? index + 1 : index) % list.length];
   return { name: m.name, size: m.size, photo: m.photo };
 }
 
-const emptyPiece = (index: number, synthetic: boolean): PieceState => ({
+const emptyPiece = (index: number, synthetic: boolean, listed?: Product[]): PieceState => ({
   index,
-  ...pieceMeta(index, synthetic),
+  ...pieceMeta(index, synthetic, listed),
   queue: [],
   head: 0,
   deadline: 0,
@@ -126,7 +128,7 @@ export class Indexer {
         }
         queue.push({ addr: q[k].buyer, nick: nick(q[k].buyer), position: k, block: Number(q[k].blockNumber), txIndex: -1, tx: null, status, deposit: formatEther(q[k].deposit) });
       }
-      pieces.push({ ...emptyPiece(i, drop.synthetic), queue, head: Number(head), deadline: Number(deadline), sold, buyer: sold ? buyer : null });
+      pieces.push({ ...emptyPiece(i, drop.synthetic, getStore().products(id)), queue, head: Number(head), deadline: Number(deadline), sold, buyer: sold ? buyer : null });
     }
     const entry: DropEntry = { drop, pieces, stats: emptyStats(), latencies: [], sellerBalance: 0n };
     this.recount(entry);
@@ -286,9 +288,17 @@ export class Indexer {
         pieceCount: Number(a.pieces),
         synthetic: payWindow < BOT_WINDOW_MAX,
       };
+      // the seller's own product list, if this drop was created with one
+      const store = getStore();
+      const pending = store.pendingMeta.get(log.transactionHash.toLowerCase());
+      if (pending) {
+        store.setProducts(id, pending);
+        store.pendingMeta.delete(log.transactionHash.toLowerCase());
+      }
+      const listed = pending ?? store.products(id);
       const entry: DropEntry = {
         drop,
-        pieces: Array.from({ length: drop.pieceCount }, (_, i) => emptyPiece(i, drop.synthetic)),
+        pieces: Array.from({ length: drop.pieceCount }, (_, i) => emptyPiece(i, drop.synthetic, listed)),
         stats: emptyStats(),
         latencies: [],
         sellerBalance: 0n,
@@ -368,6 +378,14 @@ export class Indexer {
       tipRefused: this.tipRefused.get(entry.drop.id) ?? 0,
       forfeits: rows.filter((r) => r.status === "no-show").length,
     };
+  }
+
+  /** Apply a seller's listing to a drop already in memory and tell every screen. */
+  setProducts(dropId: number, products: Product[]) {
+    const entry = this.drops.get(dropId);
+    if (!entry) return;
+    entry.pieces = entry.pieces.map((p) => ({ ...p, ...pieceMeta(p.index, entry.drop.synthetic, products) }));
+    this.emit({ type: "meta", drop: dropId, pieces: entry.pieces.map((p) => ({ index: p.index, name: p.name, size: p.size, photo: p.photo })) });
   }
 
   noteSend(hash: string) {

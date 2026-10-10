@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createDrop, presenterOk, type DropParams } from "@/lib/admin";
+import { cleanProducts, createDrop, presenterOk, type DropParams } from "@/lib/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   if (!presenterOk(req)) return NextResponse.json({ error: "presenter key required" }, { status: 401 });
   const body = (await req.json().catch(() => ({}))) as DropParams;
+  if (body.products && !cleanProducts(body.products))
+    return NextResponse.json({ error: "Each product needs a name and a photo (1 to 6 products)." }, { status: 400 });
   try {
     return NextResponse.json(await createDrop(body));
   } catch (e) {

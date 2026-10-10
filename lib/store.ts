@@ -56,6 +56,23 @@ class Store {
   products(drop: number): Product[] | undefined {
     return this.data.drops[String(drop)];
   }
+  /** Product photos are plain files next to the JSON. Returns false when the disk can't be written. */
+  savePhoto(id: string, bytes: Buffer): boolean {
+    try {
+      mkdirSync(join(DATA_DIR, "photos"), { recursive: true });
+      writeFileSync(join(DATA_DIR, "photos", id), bytes);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  readPhoto(id: string): Buffer | null {
+    try {
+      return readFileSync(join(DATA_DIR, "photos", id));
+    } catch {
+      return null;
+    }
+  }
 }
 
 const g = globalThis as unknown as { __dibsStore?: Store };
