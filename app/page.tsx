@@ -1,69 +1,67 @@
-import Image from "next/image";
+import Link from "next/link";
+import { JudgeCard } from "@/components/JudgeCard";
+import { Wordmark } from "@/components/Wordmark";
+import { addresses, addressUrl } from "@/lib/chain";
+
+const REAL = [
+  ["Claims, pay, no-show forfeits, withdrawals", "live on Monad testnet (chain 10143)"],
+  ["Money", "tINR, a test token the app mints — no real rupees"],
+  ["Store", "a labelled demo store; piece pictures are illustrations"],
+  ["Bot round", "100 scripted wallets, labelled “Bot round — synthetic”"],
+  ["Instagram", "not integrated; the link is what a seller would put in a story"],
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
+    <main className="mx-auto flex min-h-dvh max-w-[960px] flex-col gap-8 px-5 py-8">
+      <header className="flex items-center justify-between">
+        <Wordmark size={40} />
+        <span className="rounded-full bg-surface-1 px-3 py-1 text-sm text-ink-muted">Monad testnet</span>
+      </header>
+      <section className="flex flex-col gap-4">
+        <h1 className="display m-0 text-[clamp(28px,5vw,48px)] leading-[1.05]">A fair, self-rolling claim line for Instagram thrift drops.</h1>
+        <p className="m-0 max-w-[640px] text-lg text-ink-muted">
+          Buyers tap at once and Monad records the order — block by block. #1 gets a pay window; if they don&apos;t pay, their deposit goes to the
+          seller and the piece rolls to #2. You can&apos;t pay to jump this queue, the seller can&apos;t edit it, and a no-show pays for the wait.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/board/latest" className="sticker flex h-14 items-center px-7 text-lg no-underline">
+            Open the live board
+          </Link>
+          <Link href="/d/latest" className="flex h-14 items-center rounded-full bg-surface-1 px-6 font-semibold no-underline">
+            Join on your phone
+          </Link>
+          <Link href="/seller/latest" className="flex h-14 items-center rounded-full bg-surface-1 px-6 font-semibold no-underline">
+            Seller view
+          </Link>
+          <a href="https://github.com/itssaharsh/dibs" className="flex h-14 items-center rounded-full bg-surface-1 px-6 font-semibold no-underline">
+            View source
           </a>
         </div>
-      </main>
-    </div>
+      </section>
+      <section className="grid gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-3">
+          <h2 className="label-caps m-0 text-sm">Judge it in 90 seconds</h2>
+          <JudgeCard />
+        </div>
+        <div className="flex flex-col gap-3">
+          <h2 className="label-caps m-0 text-sm">What&apos;s real, what&apos;s simulated</h2>
+          <dl className="m-0 flex flex-col gap-2 text-[15px]">
+            {REAL.map(([k, v]) => (
+              <div key={k} className="perf pt-2">
+                <dt className="font-semibold">{k}</dt>
+                <dd className="m-0 text-ink-muted">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+      <footer className="text-sm text-ink-muted">
+        Contracts:{" "}
+        <a href={addressUrl(addresses.dropHouse)} className="mono">DropHouse</a> ·{" "}
+        <a href={addressUrl(addresses.token)} className="mono">tINR</a> ·{" "}
+        <a href={addressUrl(addresses.funder)} className="mono">Funder</a> — verified on MonadVision. Test money only.
+      </footer>
+    </main>
   );
 }

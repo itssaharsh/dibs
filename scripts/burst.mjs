@@ -1,3 +1,4 @@
+// Venue burst: N headless phones claim on <base>/d/latest and report tap -> place. Usage: SP=/tmp node scripts/burst.mjs <base> <n>
 import { chromium } from "@playwright/test";
 const base = process.argv[2] ?? "http://localhost:3001";
 const n = Number(process.argv[3] ?? 5);

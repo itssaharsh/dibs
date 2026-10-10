@@ -55,7 +55,7 @@ export type Snapshot = {
   pieces: PieceState[];
   seller: { address: Addr | null; balance: string };
   stats: Stats;
-  head: { block: number; receivedAt: number; baseFee: string; ts: number }; // ts = block timestamp (s)
+  head: { block: number; receivedAt: number; baseFee: string; ts: number; localAt?: number }; // ts = block timestamp (s); localAt = when this screen got it
 };
 
 export type ChainEvent =

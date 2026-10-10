@@ -1,3 +1,4 @@
+// Live check: 3 phones claim; the holder pays; another withdraws. Usage: SP=/tmp node scripts/pay-flow.mjs <base>
 import { chromium } from "@playwright/test";
 const base = process.argv[2] ?? "http://localhost:3001";
 const b = await chromium.launch();

@@ -12,14 +12,15 @@ import { txUrl } from "@/lib/chain";
 import { chime } from "@/lib/chime";
 import { fixtureSnapshot } from "@/lib/fixtures";
 import { holderOf, type ClaimRow, type Snapshot, type StreamEvent } from "@/lib/stream-types";
+import { presenterKeyFromHash, useClientValue } from "@/lib/useClient";
 import { fmtClock, fmtNum, useChainClock, useDropStream, useNow } from "@/lib/useDropStream";
 
 const VISIBLE = 12;
 
 export function Board({ drop, fixture }: { drop: string; fixture: string | null }) {
   const router = useRouter();
-  const [key, setKey] = useState<string | null>(null);
-  const [origin, setOrigin] = useState("");
+  const key = useClientValue(presenterKeyFromHash, null);
+  const origin = useClientValue(() => window.location.origin, "");
   const [sound, setSound] = useState(false);
   const [paused, setPaused] = useState<Snapshot | null>(null);
   const [featured, setFeatured] = useState(0);
@@ -30,14 +31,10 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
   const [msg, setMsg] = useState<string | null>(null);
   const [bots, setBots] = useState<string | null>(null);
   const soundRef = useRef(sound);
-  soundRef.current = sound;
-  const now = useNow(250);
-
   useEffect(() => {
-    const m = /key=([^&]+)/.exec(window.location.hash);
-    setKey(m ? decodeURIComponent(m[1]) : null);
-    setOrigin(window.location.origin);
-  }, []);
+    soundRef.current = sound;
+  }, [sound]);
+  const now = useNow(250);
 
   const snapRef = useRef<Snapshot | null>(null);
   const onEvent = useCallback(

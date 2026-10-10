@@ -27,7 +27,11 @@ export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void)
             setGen((g) => g + 1); // re-subscribe: the server resolves the new drop
             return;
           }
-          setSnap((s) => applyStream(s, ev));
+          const localAt = Date.now();
+          setSnap((s) => {
+            const n = applyStream(s, ev);
+            return n && (ev.type === "head" || ev.type === "snapshot") ? { ...n, head: { ...n.head, localAt } } : n;
+          });
           cb.current?.(ev);
         },
       },
@@ -41,11 +45,8 @@ export function useDropStream(drop: string, onEvent?: (ev: StreamEvent) => void)
 
 /** Chain time (s) from the latest head: block timestamp + time since this screen received it. */
 export function useChainClock(snap: Snapshot | null, now: number) {
-  const ref = useRef<{ block: number; ts: number; at: number }>({ block: 0, ts: 0, at: 0 });
   const h = snap?.head;
-  if (h && h.ts && h.block !== ref.current.block) ref.current = { block: h.block, ts: h.ts, at: Date.now() };
-  const r = ref.current;
-  return r.ts ? r.ts + Math.max(0, now - r.at) / 1000 : now / 1000;
+  return h?.ts ? h.ts + Math.max(0, now - (h.localAt ?? now)) / 1000 : now / 1000;
 }
 
 /** A clock that ticks every `ms` (for countdowns). */

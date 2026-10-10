@@ -1,3 +1,4 @@
+// Screenshot a page: node scripts/shot.mjs <url> <w> <h> <out.png>
 import { chromium } from "@playwright/test";
 const [,, url, w, h, out] = process.argv;
 const b = await chromium.launch();

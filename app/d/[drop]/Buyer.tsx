@@ -49,7 +49,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   const chainSec = useChainClock(snap, now);
   const nowSec = Math.floor(chainSec);
   const me = fixture ? FIXTURE_ME : burner.account?.address;
-  const pieces = snap?.pieces ?? [];
+  const pieces = useMemo(() => snap?.pieces ?? [], [snap]);
   const piece: PieceState | undefined = pieces[featured] ?? pieces[0];
   const d = snap?.drop ?? null;
 
@@ -94,7 +94,9 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
 
   // a pending tx the stream hasn't shown: ask the server at 4 s, re-send the SAME bytes at 8 s
   const pendingRef = useRef(pending);
-  pendingRef.current = pending;
+  useEffect(() => {
+    pendingRef.current = pending;
+  }, [pending]);
   useEffect(() => {
     if (fixture) return;
     const t = setInterval(async () => {

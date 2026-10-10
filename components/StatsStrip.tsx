@@ -2,13 +2,16 @@ import type { Stats } from "@/lib/stream-types";
 import { fmtNum } from "@/lib/useDropStream";
 
 /** C-05: proof of speed, straight from the stream. */
-export function StatsStrip({ stats, synthetic, bots }: { stats: Stats; synthetic?: boolean; bots?: string | null }) {
-  const blocks = stats.claims ? stats.lastBlock - stats.firstBlock + 1 : 0;
-  const Item = ({ v, l }: { v: string; l: string }) => (
+function Item({ v, l }: { v: string; l: string }) {
+  return (
     <span>
       <b>{v}</b> <span className="text-ink-muted">{l}</span>
     </span>
   );
+}
+
+export function StatsStrip({ stats, synthetic, bots }: { stats: Stats; synthetic?: boolean; bots?: string | null }) {
+  const blocks = stats.claims ? stats.lastBlock - stats.firstBlock + 1 : 0;
   return (
     <footer className="tabular flex min-h-16 flex-wrap items-center gap-x-8 gap-y-2 bg-surface-1 px-8 py-3 text-lg">
       {stats.claims === 0 ? (

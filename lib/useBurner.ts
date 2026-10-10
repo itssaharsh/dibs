@@ -22,8 +22,6 @@ export function useBurner() {
   }, []);
 
   const setup = useCallback(async () => {
-    setStatus("setup");
-    setError(null);
     try {
       let pk: string | null = null;
       try {
@@ -46,6 +44,13 @@ export function useBurner() {
   }, [sync]);
 
   useEffect(() => {
+    const t = setTimeout(() => void setup(), 0);
+    return () => clearTimeout(t);
+  }, [setup]);
+
+  const retry = useCallback(() => {
+    setStatus("setup");
+    setError(null);
     void setup();
   }, [setup]);
 
@@ -60,7 +65,7 @@ export function useBurner() {
     if (account) await sync(account).catch(() => undefined);
   }, [account, sync]);
 
-  return { account, status, error, retry: setup, take, resync };
+  return { account, status, error, retry, take, resync };
 }
 
 export type SendResult = { ok: true; hash: Hex } | { ok: false; status: number; error: string };

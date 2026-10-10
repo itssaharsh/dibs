@@ -11,7 +11,7 @@ import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
 import DropHouseAbi from "@/lib/abi/DropHouse.json";
 import FunderAbi from "@/lib/abi/Funder.json";
 import TestRupeeAbi from "@/lib/abi/TestRupee.json";
-import { addresses, GAS, maxFeeFor, monadTestnet, publicClient, rpcHttpUrls, TIP } from "@/lib/chain";
+import { addresses, maxFeeFor, monadTestnet, publicClient, rpcHttpUrls, TIP } from "@/lib/chain";
 
 export const dropHouseAbi = DropHouseAbi as typeof DropHouseAbi;
 export const funderAbi = FunderAbi as typeof FunderAbi;
