@@ -134,6 +134,14 @@ export function Seller({ drop }: { drop: string }) {
     }
   };
 
+  const restock = async () => {
+    if (!key) return;
+    const r = await fetch("/api/admin/inventory", { method: "POST", headers: { "x-presenter-key": key, "content-type": "application/json" }, body: JSON.stringify({ restock: true }) }).catch(() => null);
+    const j = r?.ok ? ((await r.json()) as { available: Product[]; sold: SoldItem[] }) : null;
+    if (j) setProducts(j.available.slice(0, MAX_PRODUCTS));
+    else setMsg("Couldn't restock.");
+  };
+
   const create = async () => {
     if (!key) return;
     setBusy(true);
@@ -206,6 +214,11 @@ export function Seller({ drop }: { drop: string }) {
           <p className="m-0 text-[13px] text-ink-muted">
             Sold, so not listed again: {soldItems.map((x) => `${x.name} (drop #${x.drop})`).join(" · ")}
           </p>
+        )}
+        {key && soldItems.length > 0 && (
+          <button type="button" onClick={restock} className="self-start text-[13px] font-semibold underline">
+            Restock the demo store&apos;s default pieces
+          </button>
         )}
         {products.length < MAX_PRODUCTS && (
           <button type="button" onClick={() => setProducts((l) => [...l, { name: "", size: "", photo: "/pieces/cap.svg" }])} className="h-10 rounded-lg bg-canvas text-[15px] font-semibold">

@@ -90,6 +90,15 @@ class Store {
     this.save();
     return listed;
   }
+  /** Demo store only: put back any default piece that isn't currently in stock (sold history is kept). */
+  restock(defaults: Product[]): Stock[] {
+    const stock = this.inventory(defaults);
+    const have = new Set(stock.filter((s) => !s.sold).map((s) => s.name));
+    const back = defaults.filter((p) => !have.has(p.name)).map((p) => ({ id: randomBytes(4).toString("hex"), name: p.name, size: p.size, photo: p.photo }));
+    this.data.inventory = [...back, ...stock];
+    this.save();
+    return this.data.inventory;
+  }
   /** A piece was paid for: take it out of stock. */
   markSold(drop: number, piece: number) {
     const id = this.products(drop)?.[piece]?.id;
