@@ -7,6 +7,11 @@ import { errText, getOperator, RESERVE, spendable } from "@/lib/operator";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const GIFT_MAX = parseEther("0.5");
+const GIFT_TOTAL = parseEther("2");
+const gg = globalThis as unknown as { __dibsGifts?: { total: bigint } };
+const gifts = (gg.__dibsGifts ??= { total: 0n });
+
 /** Wallets we control that the operator may move MON to (comma-separated in MON_PEERS). */
 const peers = () =>
   (process.env.MON_PEERS ?? "")
@@ -27,8 +32,6 @@ export async function POST(req: Request) {
   if (!op) return NextResponse.json({ error: "operator not configured" }, { status: 503 });
   const body = (await req.json().catch(() => ({}))) as { to?: string; amount?: string | number; belowReserve?: boolean };
   if (!body.to || !isAddress(body.to)) return NextResponse.json({ error: "to: address required" }, { status: 400 });
-  if (!peers().includes(body.to.toLowerCase()))
-    return NextResponse.json({ error: "to is not in MON_PEERS (wallets we control)" }, { status: 403 });
   let value: bigint;
   try {
     value = parseEther(String(body.amount));
@@ -36,6 +39,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "amount: MON as a number" }, { status: 400 });
   }
   if (value <= 0n) return NextResponse.json({ error: "amount must be positive" }, { status: 400 });
+  // any amount to a wallet we control (MON_PEERS); to anyone else only a small gas gift, capped per server run
+  const isPeer = peers().includes(body.to.toLowerCase());
+  if (!isPeer && (value > GIFT_MAX || gifts.total + value > GIFT_TOTAL))
+    return NextResponse.json(
+      { error: `to is not in MON_PEERS: only gas gifts up to ${formatEther(GIFT_MAX)} MON (${formatEther(GIFT_TOTAL)} in total) go to other addresses` },
+      { status: 403 },
+    );
   const bal = await op.balance();
   const fee = 21_000n * maxFeeFor(op.baseFee);
   if (bal < value + fee) return NextResponse.json({ error: `operator holds ${formatEther(bal)} MON` }, { status: 409 });
@@ -46,6 +56,7 @@ export async function POST(req: Request) {
     );
   try {
     const hash = await op.sendTx({ to: body.to as Hex, data: "0x", value, gas: 21_000n });
+    if (!isPeer) gifts.total += value;
     const r = await publicClient().waitForTransactionReceipt({ hash, pollingInterval: 250, timeout: 30_000 });
     const after = await op.balance();
     return NextResponse.json({
