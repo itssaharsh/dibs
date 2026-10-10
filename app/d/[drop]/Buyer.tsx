@@ -46,7 +46,8 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   const canFollow = useCallback(() => !busyRef.current, []);
   const { snap: liveSnap, connected, newer, follow } = useDropStream(live ? drop : "", onStream, canFollow);
   const now = useNow(250);
-  const [featured, setFeatured] = useState(0);
+  // which piece fills the screen: the buyer's own choice for this drop, else chosen once when the drop loads
+  const [picked, setPicked] = useState<{ drop: number; index: number } | null>(null);
   const [pending, setPending] = useState<Record<number, PendingTx | null>>({});
   const [reason, setReason] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
@@ -77,8 +78,21 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
     busyRef.current = live || Object.values(pending).some((x) => x && !x.error);
   }, [snap, me, pending]);
   const pieces = useMemo(() => snap?.pieces ?? [], [snap]);
-  const piece: PieceState | undefined = pieces[featured] ?? pieces[0];
   const d = snap?.drop ?? null;
+  // never open on a sold piece when something is still available: my own call first, else the first unsold piece
+  const autoIndex = useMemo(() => {
+    if (fixture) return 0;
+    for (const st of ["holding", "won", "waiting"]) {
+      const i = pieces.findIndex((p) => mineIn(p, me)?.status === st);
+      if (i >= 0) return i;
+    }
+    const open = pieces.findIndex((p) => !p.sold);
+    return open >= 0 ? open : 0;
+  }, [pieces, me, fixture]);
+  // lock the choice once per drop so the piece never changes under the buyer's thumb
+  if (d && (me || fixture) && pieces.length > 0 && picked?.drop !== d.id) setPicked({ drop: d.id, index: autoIndex });
+  const featured = d && picked?.drop === d.id ? picked.index : autoIndex;
+  const piece: PieceState | undefined = pieces[featured] ?? pieces[0];
 
   const stateFor = useCallback(
     (p: PieceState | undefined): BuyerState => {
@@ -185,7 +199,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
   const press = (p: PieceState | undefined, st: BuyerState) => {
     setReason(null);
     if (!p || fixture) return;
-    if (p !== piece) setFeatured(p.index);
+    if (p !== piece && d) setPicked({ drop: d.id, index: p.index });
     switch (st) {
       case "live":
         return void act(p, "claim");
@@ -282,7 +296,9 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
           ? `Sold to #${(piece.queue.find((r) => r.status === "won")?.position ?? 0) + 1} (${piece.queue.find((r) => r.status === "won")?.nick ?? "another buyer"}). Your ${deposit} tINR deposit is waiting.`
           : null;
 
-  const others = pieces.filter((p) => p !== piece);
+  // sold pieces drop out of the list of things to call dibs on (unless one of them is mine)
+  const others = pieces.filter((p) => p !== piece && (!p.sold || !!mineIn(p, me)));
+  const gone = pieces.filter((p) => p !== piece && p.sold && !mineIn(p, me));
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-canvas pb-[calc(128px+env(safe-area-inset-bottom))]">
@@ -401,7 +417,7 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
                   <div key={p.index} className="flex items-center gap-2.5 text-[15px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={p.photo} alt="" className="h-12 w-12 shrink-0 rounded-lg bg-surface-1 object-cover" />
-                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setFeatured(p.index)}>
+                    <button type="button" className="min-w-0 flex-1 text-left" onClick={() => d && setPicked({ drop: d.id, index: p.index })}>
                       <b>{p.name}</b>{" "}
                       <span className="text-ink-muted">
                         {p.sold ? "sold" : m ? `you're #${m.position + 1}` : `${p.queue.length} called dibs`}
@@ -412,6 +428,22 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
                 );
               })}
             </div>
+          )}
+          {gone.length > 0 && (
+            <details className="mx-4 mt-4 text-sm text-ink-muted">
+              <summary className="cursor-pointer font-semibold">Sold in this drop ({gone.length})</summary>
+              <ul className="m-0 mt-1 list-none p-0">
+                {gone.map((p) => {
+                  const b = p.queue.find((r) => r.status === "won");
+                  return (
+                    <li key={p.index} className="py-0.5">
+                      {p.name}
+                      {b ? ` — sold to #${b.position + 1} ${b.nick}` : " — sold"}
+                    </li>
+                  );
+                })}
+              </ul>
+            </details>
           )}
           <Link href={`/d/${d?.id ?? drop}/ticket`} className="mx-4 mt-5 text-sm text-ink-muted underline">
             Your record across Dibs stores

@@ -16,7 +16,8 @@ type SellerOrder = {
   drop: number; piece: number; item: string; size: string; nick: string; paid: string; shipped: boolean;
   details: { name: string; contact: string; address: string } | null;
 };
-type Product = { name: string; size: string; photo: string };
+type Product = { id?: string; name: string; size: string; photo: string };
+type SoldItem = { id: string; name: string; drop: number };
 const MAX_PRODUCTS = 6;
 
 /** Shrink a phone photo in the browser (longest side 900 px, JPEG) so the upload stays small. */
@@ -44,6 +45,32 @@ export function Seller({ drop }: { drop: string }) {
   const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [products, setProducts] = useState<Product[]>(() => seed.pieces.map((p) => ({ name: p.name, size: p.size, photo: p.photo })));
   const [uploading, setUploading] = useState<number | null>(null);
+  const [soldItems, setSoldItems] = useState<SoldItem[]>([]);
+
+  // the seller's stock: list only what hasn't sold, and take a piece out of the form the moment it sells
+  useEffect(() => {
+    if (!key) return;
+    let stop = false;
+    let first = true;
+    const load = () =>
+      fetch("/api/admin/inventory", { headers: { "x-presenter-key": key } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: { available: Product[]; sold: SoldItem[] } | null) => {
+          if (stop || !j) return;
+          setSoldItems(j.sold);
+          const soldIds = new Set(j.sold.map((x) => x.id));
+          if (first) setProducts(j.available);
+          else setProducts((list) => list.filter((p) => !p.id || !soldIds.has(p.id)));
+          first = false;
+        })
+        .catch(() => undefined);
+    void load();
+    const t = setInterval(load, 4_000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [key]);
   const now = useNow(500);
 
   const onEvent = useCallback((ev: StreamEvent) => {
@@ -174,6 +201,12 @@ export function Seller({ drop }: { drop: string }) {
             </li>
           ))}
         </ul>
+        {products.length === 0 && <p className="m-0 text-sm font-semibold">Everything you listed has sold. Add a product to drop again.</p>}
+        {soldItems.length > 0 && (
+          <p className="m-0 text-[13px] text-ink-muted">
+            Sold, so not listed again: {soldItems.map((x) => `${x.name} (drop #${x.drop})`).join(" · ")}
+          </p>
+        )}
         {products.length < MAX_PRODUCTS && (
           <button type="button" onClick={() => setProducts((l) => [...l, { name: "", size: "", photo: "/pieces/cap.svg" }])} className="h-10 rounded-lg bg-canvas text-[15px] font-semibold">
             + Add a product
@@ -184,7 +217,7 @@ export function Seller({ drop }: { drop: string }) {
         {field("Pay window", "payWindow", "s")}
         {field("Opens in", "startsIn", "s")}
         {key ? (
-          <button type="button" onClick={create} aria-disabled={busy || undefined} className="h-12 rounded-full bg-ink font-semibold text-canvas">
+          <button type="button" onClick={() => products.length > 0 && create()} aria-disabled={busy || products.length === 0 || undefined} className="h-12 rounded-full bg-ink font-semibold text-canvas">
             {busy ? "Creating on Monad…" : "Create drop"}
           </button>
         ) : (

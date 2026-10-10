@@ -128,6 +128,7 @@ export class Indexer {
         }
         queue.push({ addr: q[k].buyer, nick: nick(q[k].buyer), position: k, block: Number(q[k].blockNumber), txIndex: -1, tx: null, status, deposit: formatEther(q[k].deposit) });
       }
+      if (sold) getStore().markSold(id, i); // catches a sale that happened while the server was down
       pieces.push({ ...emptyPiece(i, drop.synthetic, getStore().products(id)), queue, head: Number(head), deadline: Number(deadline), sold, buyer: sold ? buyer : null });
     }
     const entry: DropEntry = { drop, pieces, stats: emptyStats(), latencies: [], sellerBalance: 0n };
@@ -334,6 +335,7 @@ export class Indexer {
       }
       case "Paid":
         ev = { type: "paid", drop: id, piece, addr, amount: formatEther(a.amount as bigint), tx };
+        getStore().markSold(id, piece); // one-of-a-kind: a paid piece leaves the seller's stock
         entry.sellerBalance += a.amount as bigint;
         break;
       case "Forfeited":

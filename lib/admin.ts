@@ -3,6 +3,7 @@ import { parseEther, parseEventLogs } from "viem";
 import { addresses, GAS, publicClient } from "@/lib/chain";
 import { dropHouseAbi, getOperator } from "@/lib/operator";
 import { getStore, type Product } from "@/lib/store";
+import seed from "@/seed/drop.json";
 
 /** Admin routes need header x-presenter-key = PRESENTER_KEY. */
 export function presenterOk(req: Request, key = process.env.PRESENTER_KEY): boolean {
@@ -15,6 +16,7 @@ export function presenterOk(req: Request, key = process.env.PRESENTER_KEY): bool
 
 export type DropParams = { startsIn?: number; payWindow?: number; price?: number; deposit?: number; pieces?: number; products?: Product[] };
 export const MAX_PIECES = 6;
+export const DEFAULT_PRODUCTS: Product[] = seed.pieces.map((p) => ({ name: p.name, size: p.size, photo: p.photo }));
 
 /** A seller's product list: 1 to 6 pieces, each with a name, a size and a photo we host. Returns null if unusable. */
 export function cleanProducts(input: unknown): Product[] | null {
@@ -25,7 +27,8 @@ export function cleanProducts(input: unknown): Product[] | null {
     const size = String(x?.size ?? "").trim().slice(0, 20);
     const photo = String(x?.photo ?? "");
     if (!name || !/^\/(api\/photo\/[a-f0-9]{16}\.(jpg|png|webp)|pieces\/[a-z0-9-]+\.(svg|jpg|png|webp))$/.test(photo)) return null;
-    out.push({ name, size: size || "One size", photo });
+    const id = typeof x?.id === "string" && /^[a-f0-9]{8}$/.test(x.id) ? x.id : undefined;
+    out.push({ ...(id ? { id } : {}), name, size: size || "One size", photo });
   }
   return out;
 }
@@ -38,8 +41,10 @@ export async function createDrop(p: DropParams = {}): Promise<{ id: number; tx: 
   const payWindow = Math.max(2, Math.min(p.payWindow ?? 30, 3600));
   const price = Math.max(1, Math.min(p.price ?? 450, 100_000));
   const deposit = Math.max(1, Math.min(p.deposit ?? 50, price));
-  const products = p.products ? cleanProducts(p.products) : null;
-  if (p.products && !products) throw new Error("products: 1 to 6 pieces, each with a name and a photo");
+  const cleaned = p.products ? cleanProducts(p.products) : null;
+  if (p.products && !cleaned) throw new Error("products: 1 to 6 pieces, each with a name and a photo");
+  // a listing becomes the seller's stock: each piece gets an id, so it can be taken out of stock when it sells
+  const products = cleaned ? getStore().saveListing(cleaned, DEFAULT_PRODUCTS) : null;
   const pieces = products ? products.length : Math.max(1, Math.min(p.pieces ?? 3, MAX_PIECES));
   const hash = await op.call(
     "createDrop",
