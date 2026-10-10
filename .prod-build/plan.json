@@ -219,10 +219,18 @@
         "npm test -- send-guard"
       ],
       "rollback": "git revert; the chain holds the state",
-      "status": "doing",
-      "notes": "[2026-10-10 start]",
+      "status": "done",
+      "notes": "[2026-10-10 start]\n[2026-10-10 done] E0024-E0029",
       "base": "2ae305a",
-      "started_after": 23
+      "started_after": 23,
+      "evidence": [
+        "E0024",
+        "E0025",
+        "E0026",
+        "E0027",
+        "E0028",
+        "E0029"
+      ]
     },
     {
       "id": "T05",
@@ -261,8 +269,10 @@
         "observe: a phone taps Dibs and the board shows its row with a block number within 2 s, 5 times"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "doing",
+      "notes": "[2026-10-10 start]",
+      "base": "a68c927",
+      "started_after": 29
     },
     {
       "id": "T06",
@@ -394,8 +404,10 @@
         "observe: /board/1?state=waiting|live|rolled|sold|disconnected each match the mockup at 1440x900"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "doing",
+      "notes": "[2026-10-10 start]",
+      "base": "a68c927",
+      "started_after": 29
     },
     {
       "id": "T10",
@@ -433,8 +445,10 @@
         "observe: pay and withdraw on testnet from a phone"
       ],
       "rollback": "git revert",
-      "status": "todo",
-      "notes": ""
+      "status": "doing",
+      "notes": "[2026-10-10 start]",
+      "base": "a68c927",
+      "started_after": 29
     },
     {
       "id": "T11",

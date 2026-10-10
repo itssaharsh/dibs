@@ -1,0 +1,26 @@
+import { chromium } from "@playwright/test";
+const base = process.argv[2] ?? "http://localhost:3001";
+const n = Number(process.argv[3] ?? 5);
+const b = await chromium.launch();
+const run = async (i) => {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  const p = await ctx.newPage();
+  const errs = [];
+  p.on("pageerror", (e) => errs.push(e.message));
+  await p.goto(`${base}/d/latest`);
+  const btn = p.locator("div.fixed button").first();
+  await btn.filter({ hasText: "DIBS" }).waitFor({ timeout: 60000 });
+  const t0 = Date.now();
+  await btn.click();
+  await p.getByText("Getting in line…").first().waitFor({ timeout: 2000 }).catch(() => {});
+  const tGetting = Date.now() - t0;
+  await btn.filter({ hasText: /You're #/ }).waitFor({ timeout: 20000 });
+  const ms = Date.now() - t0;
+  const label = await btn.textContent();
+  await p.screenshot({ path: `${process.env.SP}/tap-${i}.png` });
+  await ctx.close();
+  return { i, ms, tGetting, label, errs: errs.slice(0, 2) };
+};
+const res = await Promise.allSettled(Array.from({ length: n }, (_, i) => run(i)));
+for (const r of res) console.log(JSON.stringify(r.status === "fulfilled" ? r.value : String(r.reason).slice(0, 200)));
+await b.close();

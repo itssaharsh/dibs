@@ -11,12 +11,15 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "motion": "^14.1.0",
     "next": "16.4.0",
+    "qrcode.react": "^4.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "viem": "^2.57.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^22.20.5",
     "@types/react": "^19",
