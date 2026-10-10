@@ -4,7 +4,13 @@
 
 ![The Dibs board live on Railway: three buyers called dibs on one jacket and each put down a deposit priced by their own record — 25 (paid on time before), 50 (new buyer), 100 (ghosted before) — with the block each call landed in](docs/board.png)
 
-**Live:** [https://web-production-b1eb0.up.railway.app](https://web-production-b1eb0.up.railway.app) · **Board (projector):** [/board/latest](https://web-production-b1eb0.up.railway.app/board/latest) · **Phone:** [/d/latest](https://web-production-b1eb0.up.railway.app/d/latest) (Railway, one instance).
+| | |
+|---|---|
+| **Live URL** | https://web-production-b1eb0.up.railway.app — board: [/board/latest](https://web-production-b1eb0.up.railway.app/board/latest) · phone: [/d/latest](https://web-production-b1eb0.up.railway.app/d/latest) |
+| **Repo** | https://github.com/itssaharsh/dibs |
+| **Deployment network** | Monad Testnet (chain id 10143), hosted on Railway |
+| **Contract address** | DropHouse [`0xb6517ec3d3b676f0ed2e278ef9955fba98352a75`](https://testnet.monadvision.com/address/0xb6517ec3d3b676f0ed2e278ef9955fba98352a75) · tINR [`0x9266e65380e7f1bd5fc64a9a4f4fb9f1a6acf27c`](https://testnet.monadvision.com/address/0x9266e65380e7f1bd5fc64a9a4f4fb9f1a6acf27c) · Funder [`0x3f3f1e5fb18c95736f089776352d15e9bc4149f4`](https://testnet.monadvision.com/address/0x3f3f1e5fb18c95736f089776352d15e9bc4149f4) — all three verified (source published) |
+| **Demo video** | [docs/demo.mp4](docs/demo.mp4) (65 s, the live site: one buyer pays, one ghosts, the next drop prices them 25 / 100) · ad: [docs/ad.mp4](docs/ad.mp4) |
 
 > Every outcome goes on the buyer's record — paid on time, or ghosted. The contract keeps it from its own outcomes, every Dibs store reads it, and no store can edit it. So reliable buyers put down less, ghosts put down more, and a fresh wallet only ever gets the stranger price.
 
@@ -42,11 +48,19 @@ Measured on testnet today: 100 bot claims landed across 10 blocks in 2.9 s. The 
 
 ## Run it
 
+You need Node 22+ and, for the contracts, [Foundry](https://getfoundry.sh). The repo already points at the deployed
+contracts (`deployments/testnet.json`), so you don't have to deploy anything to run it.
+
+- **Just look:** `npm install && npm run dev` with no keys at all. The board and phone pages run against the live
+  contracts; only "fund a new phone" and the presenter buttons are off.
+- **Everything:** make a throwaway key (`cast wallet new`), send it more than 10 test MON from
+  https://faucet.monad.xyz (Monad keeps 10 MON parked per wallet; see [docs/MON.md](docs/MON.md)), and put it in `.env`.
+
 ```bash
-cp .env.example .env            # OPERATOR_PK (test key, > 12 MON), DEPLOYER_PK, PRESENTER_KEY
+cp .env.example .env            # OPERATOR_PK (test key holding > 10 test MON), DEPLOYER_PK, PRESENTER_KEY (any string)
 npm install
 node scripts/check-rpc.mjs      # chain 10143, latest block, operator balance
-npm run dev                     # http://localhost:3000 — board at /board/latest#key=<PRESENTER_KEY>
+npm run dev                     # http://localhost:3000 — board at /board/latest#key=<PRESENTER_KEY>, phone at /d/latest
 npm test && npm run typecheck   # unit tests (reducer, guards, keeper, tx params, reconnect)
 cd contracts && forge test      # 8 tests: order by block, tip cap, forfeit, pay+withdraw, guards, permit
 ```
