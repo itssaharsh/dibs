@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { presenterKeyFromHash, useClientValue } from "@/lib/useClient";
 import { PresenterKey } from "@/components/PresenterKey";
 import { Wordmark } from "@/components/Wordmark";
@@ -11,6 +11,10 @@ import { nick } from "@/lib/nick";
 import { holderOf, type StreamEvent } from "@/lib/stream-types";
 import { fmtClock, fmtNum, useChainClock, useDropStream, useNow } from "@/lib/useDropStream";
 
+type SellerOrder = {
+  drop: number; piece: number; item: string; size: string; nick: string; paid: string; shipped: boolean;
+  details: { name: string; contact: string; address: string } | null;
+};
 type Entry = { kind: "Paid" | "Ghosted" | "Returned"; piece: string; who: string; amount: string; tx: string | null; at: number };
 
 export function Seller({ drop }: { drop: string }) {
@@ -22,6 +26,7 @@ export function Seller({ drop }: { drop: string }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [showQr, setShowQr] = useState(false);
+  const [orders, setOrders] = useState<SellerOrder[]>([]);
   const now = useNow(500);
 
   const onEvent = useCallback((ev: StreamEvent) => {
@@ -35,6 +40,34 @@ export function Seller({ drop }: { drop: string }) {
   const chainSec = useChainClock(snap, now);
   const d = snap?.drop;
   const link = `${origin}/d/${d?.id ?? drop}`;
+
+  // the seller's order list: sold pieces and where to send them (seller only)
+  const dropId = d?.id;
+  useEffect(() => {
+    if (!key || !dropId) return;
+    let stop = false;
+    const load = () =>
+      fetch(`/api/admin/orders?drop=${dropId}`, { headers: { "x-presenter-key": key } })
+        .then((r) => (r.ok ? r.json() : { orders: [] }))
+        .then((j) => !stop && setOrders(j.orders ?? []))
+        .catch(() => undefined);
+    void load();
+    const t = setInterval(load, 4_000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [key, dropId]);
+
+  const ship = async (o: SellerOrder) => {
+    if (!key) return;
+    await fetch("/api/admin/orders", {
+      method: "POST",
+      headers: { "x-presenter-key": key, "content-type": "application/json" },
+      body: JSON.stringify({ drop: o.drop, piece: o.piece, shipped: !o.shipped }),
+    }).catch(() => undefined);
+    setOrders((list) => list.map((x) => (x.piece === o.piece ? { ...x, shipped: !o.shipped } : x)));
+  };
 
   const create = async () => {
     if (!key) return;
@@ -149,6 +182,36 @@ export function Seller({ drop }: { drop: string }) {
             <span className="label-caps text-sm">Balance</span>
             <span className="display tabular text-2xl">{fmtNum(Math.round(Number(snap!.seller.balance)))} tINR</span>
           </div>
+          <h3 className="m-0 text-sm font-semibold text-ink-muted">Orders to ship</h3>
+          {!key ? (
+            <p className="m-0 text-sm text-ink-muted">Only the seller sees buyers&apos; delivery details. Enter the presenter key above.</p>
+          ) : orders.length === 0 ? (
+            <p className="m-0 text-sm text-ink-muted">Nothing sold in this drop yet. When a buyer pays, their order appears here.</p>
+          ) : (
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              {orders.map((o) => (
+                <li key={o.piece} className="flex flex-col gap-1 rounded-lg bg-surface-1 p-3 text-[15px]">
+                  <span>
+                    <b>{o.item}</b> · {o.size} · paid {fmtNum(o.paid)} tINR by {o.nick}
+                  </span>
+                  {o.details ? (
+                    <>
+                      <span>
+                        Send to: <b>{o.details.name}</b>
+                        {o.details.contact ? ` · ${o.details.contact}` : ""}
+                      </span>
+                      <span className="whitespace-pre-wrap text-ink-muted">{o.details.address}</span>
+                      <button type="button" onClick={() => ship(o)} className={`mt-1 h-10 rounded-full font-semibold ${o.shipped ? "bg-success text-canvas" : "bg-ink text-canvas"}`}>
+                        {o.shipped ? "Shipped ✓ (tap to undo)" : "Mark shipped"}
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-ink-muted">Waiting for the buyer&apos;s delivery details.</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
           <h3 className="m-0 text-sm font-semibold text-ink-muted">Ledger (this session)</h3>
           {ledger.length === 0 ? (
             <p className="m-0 text-sm text-ink-muted">Payments, ghosts&apos; deposits and deposits returned to buyers appear here as they land.</p>

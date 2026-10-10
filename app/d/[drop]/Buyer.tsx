@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
+import { Delivery } from "@/components/Delivery";
 import { DibsButton } from "@/components/DibsButton";
 import { HangTag, SoldMark } from "@/components/HangTag";
 import { Wordmark } from "@/components/Wordmark";
@@ -384,6 +385,10 @@ export function Buyer({ drop, fixture }: { drop: string; fixture: string | null 
                 MonadVision ↗
               </a>
             </div>
+          )}
+
+          {live && mine?.status === "won" && burner.account && d && (
+            <Delivery account={burner.account} drop={d.id} piece={piece.index} item={piece.name} />
           )}
 
           {others.length > 0 && (
