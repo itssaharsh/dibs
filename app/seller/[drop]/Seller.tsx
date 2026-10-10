@@ -85,7 +85,7 @@ export function Seller({ drop }: { drop: string }) {
 
       <section className="flex flex-col gap-3 rounded-[14px] bg-surface-1 p-4">
         <h1 className="display m-0 text-xl">New drop</h1>
-        <p className="m-0 text-sm text-ink-muted">Three pieces from the demo store. Buyers pay a deposit to get in line; a no-show&apos;s deposit is yours.</p>
+        <p className="m-0 text-sm text-ink-muted">Three pieces from the demo store. Buyers put down a deposit to call dibs; a ghost&apos;s deposit is yours.</p>
         {field("Price", "price", "tINR")}
         {field("Deposit", "deposit", "tINR")}
         {field("Pay window", "payWindow", "s")}
