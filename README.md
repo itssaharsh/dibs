@@ -30,7 +30,8 @@
 | Buyer record (paid on time / ghosted) and the deposit it prices | **Live on chain**: `paidCount` / `ghostCount` / `depositFor` in DropHouse |
 | Order of the line | **Chain order**: block, then position in block. Every row links to MonadVision |
 | Money | **tINR, a test token** the app mints. No real rupees |
-| Store | A labelled demo store ("pocket.thrift"); piece pictures are illustrations |
+| Store | A labelled demo store ("pocket.thrift"); the default piece pictures are illustrations. A seller can list their own pieces with photos |
+| Delivery | Buyers can send delivery details and sellers can mark an order shipped. **Nothing really ships**: use made-up details |
 | Bot round | **Synthetic**: 100 generated wallets, labelled "Bot round — synthetic" on screen |
 | Instagram | Not integrated. The link is what a seller would put in a story |
 | Contract v1 | [0x119d…302f](https://testnet.monadvision.com/address/0x119d4dd7b665717d328dc059daa98b85e7c8302f) (uniform deposits) is superseded by v2 (record-priced deposits) |
@@ -38,6 +39,8 @@
 ## How it works
 
 - **The record.** `DropHouse.sol` ([verified on MonadVision](https://testnet.monadvision.com/address/0xb6517ec3d3b676f0ed2e278ef9955fba98352a75)) counts, per wallet, payments made in time and windows that lapsed. `depositFor()` prices every new call from that record: standing = paid − ghosted; 0 (a stranger) puts down the drop's deposit, +1 half, +2 a quarter, −1 double, −2 triple. Nobody reports a ghost: the contract records its own outcomes, so no seller can smear a buyer, and starting a fresh wallet only buys the stranger price.
+- **The seller's side.** On the seller page a seller lists their own pieces (name, size, a photo taken on the phone; up to six per drop), sets the price, deposit and pay window, and creates the drop. After a sale they get an order list: the buyer's delivery details and a "Mark shipped" button.
+- **Delivery details stay off the chain.** After paying, the buyer signs their delivery details with the wallet that bought the piece, so nobody else can set or change the address. Only the seller can read them. They and the product photos live in one file on the server's disk, because an address is personal and a photo is bulky. Everything about money and order stays on chain.
 - **The drop.** DropHouse also keeps one list of calls per piece. `claimWithPermit` takes a refundable deposit in one transaction and appends the buyer. The first in line holds the piece for the pay window. `payWithPermit` buys it (the deposit counts toward the price). After the window anyone can call `advance()`: the deposit goes to the seller and the next claimant's turn starts. Once a piece sells, everyone else `withdraw`s their deposit.
 - **Tip cap.** Monad leaders order transactions by priority fee, so `claim` reverts with `"tip above cap"` when `tx.gasprice - block.basefee > 2 gwei`. A fee can't buy a place.
 - **Money moves in tINR** ([ERC-20 + permit](https://testnet.monadvision.com/address/0x9266e65380e7f1bd5fc64a9a4f4fb9f1a6acf27c)), never native MON. Monad keeps a 10 MON reserve per account, so small wallets can't send value. **`Funder.sol`** ([verified](https://testnet.monadvision.com/address/0x3f3f1e5fb18c95736f089776352d15e9bc4149f4)) gives up to 50 phones gas MON and tINR in one transaction.
@@ -74,6 +77,8 @@ Contracts: `forge script script/Deploy.s.sol --rpc-url https://testnet-rpc.monad
 - A record tied to a wallet is only as strong as the wallet: a ghost can start fresh, but only at the stranger price. A real product would bind the wallet to a phone passkey.
 - The record is public, per wallet, under a nickname. That is the point for sellers; buyers see exactly what sellers see, on their own record page.
 - Real money would need a rupee on-ramp. Everything here is testnet money.
+- Payment goes straight to the seller, so a buyer is not protected from a seller who never ships. Holding payment until delivery, and a seller record next to the buyer's, is the next step.
+- In this demo the "seller" is our server's wallet: whoever holds the presenter key creates drops and reads orders. A real seller would use their own wallet.
 - Another fast chain could run this. Monad's ~0.4 s blocks are what make it work live, in a room.
 - Next: bind the wallet to a phone passkey so a record can't be shed, and let each seller choose how steeply the record prices deposits.
 
