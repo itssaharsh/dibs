@@ -1,0 +1,15 @@
+{
+  "name": "Monad Blitz Pune V3",
+  "start": "2026-10-10T03:30:00Z",
+  "end": "2026-10-10T15:30:00Z",
+  "freeze": "2026-10-10T11:30:00Z",
+  "freeze_set": true,
+  "source": "https://luma.com/monad-blitz-pune-sep-2026",
+  "provisional": "Day 9 AM-9 PM relayed from the registered Luma view; the 7-hour build block's start and end are not published (Mumbai V3 ran hacking 12:00-18:00, code freeze 18:00); freeze set 1 h before that template's code freeze; re-set at kickoff with the announced instants",
+  "history": "strict",
+  "tz_min": 330,
+  "sponsors": [
+    "Monad"
+  ],
+  "set_at": "2026-10-10T01:01:12Z"
+}
