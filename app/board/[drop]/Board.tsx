@@ -7,6 +7,7 @@ import { HangTag, SoldMark } from "@/components/HangTag";
 import { LedPanel } from "@/components/LedPanel";
 import { LineRow } from "@/components/LineRow";
 import { StatsStrip } from "@/components/StatsStrip";
+import { PresenterKey } from "@/components/PresenterKey";
 import { Wordmark } from "@/components/Wordmark";
 import { txUrl } from "@/lib/chain";
 import { chime } from "@/lib/chime";
@@ -85,13 +86,14 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
   const chainSec = useChainClock(snap, now);
 
   const admin = async (path: string, label: string) => {
-    if (!key) return setMsg("Presenter only: open the board with #key=… in the URL.");
+    if (!key) return;
     setBusy(label);
     setMsg(null);
     try {
       const r = await fetch(`/api/admin/${path}`, { method: "POST", headers: { "x-presenter-key": key, "content-type": "application/json" }, body: "{}" });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok && r.status !== 202) setMsg(j.error ?? `failed (${r.status})`);
+      if (r.status === 401) setMsg("That presenter key isn't right.");
+      else if (!r.ok && r.status !== 202) setMsg(j.error ?? `failed (${r.status})`);
       else if (path === "start" && j.id) router.replace(`/board/${j.id}${window.location.hash}`);
     } catch {
       setMsg("Couldn't reach the server.");
@@ -151,21 +153,27 @@ export function Board({ drop, fixture }: { drop: string; fixture: string | null 
           <span className="mono font-medium text-ink">block {fmtNum(snap.head.block)}</span>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            aria-disabled={(!!busy || (opensIn > 0 && !d.synthetic)) || undefined}
-            onClick={() => !busy && admin("start", "start")}
-            className="h-10 rounded-lg bg-ink px-4 text-[15px] font-semibold text-canvas"
-          >
-            {busy === "start" ? "Starting…" : "Start drop"}
-          </button>
-          <button
-            type="button"
-            onClick={() => !busy && admin("bots", "bots")}
-            className="h-10 rounded-lg bg-surface-1 px-4 text-[15px] font-semibold"
-          >
-            {busy === "bots" ? "Starting bots…" : "Run bot round"}
-          </button>
+          {key ? (
+            <>
+            <button
+              type="button"
+              aria-disabled={(!!busy || (opensIn > 0 && !d.synthetic)) || undefined}
+              onClick={() => !busy && admin("start", "start")}
+              className="h-10 rounded-lg bg-ink px-4 text-[15px] font-semibold text-canvas"
+            >
+              {busy === "start" ? "Starting…" : "Start drop"}
+            </button>
+            <button
+              type="button"
+              onClick={() => !busy && admin("bots", "bots")}
+              className="h-10 rounded-lg bg-surface-1 px-4 text-[15px] font-semibold"
+            >
+              {busy === "bots" ? "Starting bots…" : "Run bot round"}
+            </button>
+            </>
+          ) : (
+            <PresenterKey compact />
+          )}
           {d.synthetic && (
             <Link href={`/board/latest${key ? `#key=${encodeURIComponent(key)}` : ""}`} className="flex h-10 items-center rounded-lg bg-surface-1 px-4 text-[15px] font-semibold">
               Back to the room&apos;s drop

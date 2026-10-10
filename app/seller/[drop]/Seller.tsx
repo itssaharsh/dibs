@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { presenterKeyFromHash, useClientValue } from "@/lib/useClient";
+import { PresenterKey } from "@/components/PresenterKey";
 import { Wordmark } from "@/components/Wordmark";
 import { txUrl } from "@/lib/chain";
 import { holderOf, type StreamEvent } from "@/lib/stream-types";
@@ -35,7 +36,7 @@ export function Seller({ drop }: { drop: string }) {
   const link = `${origin}/d/${d?.id ?? drop}`;
 
   const create = async () => {
-    if (!key) return setMsg("Seller controls need the presenter key (#key=… in the URL).");
+    if (!key) return;
     setBusy(true);
     setMsg(null);
     try {
@@ -45,7 +46,8 @@ export function Seller({ drop }: { drop: string }) {
         body: JSON.stringify({ ...form, pieces: 3 }),
       });
       const j = await r.json();
-      if (!r.ok) setMsg(j.error ?? "Couldn't create the drop.");
+      if (r.status === 401) setMsg("That presenter key isn't right.");
+      else if (!r.ok) setMsg(j.error ?? "Couldn't create the drop.");
       else router.push(`/seller/${j.id}${window.location.hash}`);
     } catch {
       setMsg("Couldn't reach the server.");
@@ -87,9 +89,19 @@ export function Seller({ drop }: { drop: string }) {
         {field("Deposit", "deposit", "tINR")}
         {field("Pay window", "payWindow", "s")}
         {field("Opens in", "startsIn", "s")}
-        <button type="button" onClick={create} aria-disabled={busy || undefined} className="h-12 rounded-full bg-ink font-semibold text-canvas">
-          {busy ? "Creating on Monad…" : "Create drop"}
-        </button>
+        {key ? (
+          <button type="button" onClick={create} aria-disabled={busy || undefined} className="h-12 rounded-full bg-ink font-semibold text-canvas">
+            {busy ? "Creating on Monad…" : "Create drop"}
+          </button>
+        ) : (
+          <div className="flex flex-col gap-2 rounded-lg bg-canvas p-3">
+            <p className="m-0 text-sm text-ink-muted">
+              Creating a drop spends this demo&apos;s test MON, so it is limited to the presenter. Enter the presenter key to create one, or
+              watch the live drop below: that works for everyone.
+            </p>
+            <PresenterKey label="Unlock create" />
+          </div>
+        )}
         {msg && <p className="m-0 text-sm font-semibold text-danger">{msg}</p>}
       </section>
 
